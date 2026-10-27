@@ -8,6 +8,7 @@ import HomePage from '../pages/home'
 import TitlePage from '../pages/title/titlePage'
 import Navigation from '../widgets/navigation'
 import SessionsPage from '../pages/sessions'
+import ListeningSessionPage from '../pages/listening-session'
 import StatisticsPage from '../pages/statistics'
 import ProfilePage from '../pages/profile'
 
@@ -49,6 +50,7 @@ function App() {
           <Route index element={<Navigate to="home" replace />} />
           <Route path="home" element={<HomePage />} />
           <Route path="sessions" element={<SessionsPage />} />
+          <Route path="sessions/:id" element={<ListeningSessionPage />} />
           <Route path="statistics" element={<StatisticsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>

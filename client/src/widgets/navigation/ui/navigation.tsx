@@ -23,6 +23,7 @@ const MenuItem = [
 function Navigation() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const activePath = pathname.startsWith('/user/sessions/') ? '/user/sessions' : pathname
   return (
     <Box
       sx={{
@@ -45,13 +46,13 @@ function Navigation() {
           <ListItemButton
             key={item.path}
             onClick={() => navigate(item.path)}
-            selected={pathname === item.path}
-            aria-current={pathname === item.path ? 'page' : undefined}
+            selected={activePath === item.path}
+            aria-current={activePath === item.path ? 'page' : undefined}
             aria-label={item.label}
             title={item.label}
             sx={{ justifyContent: { xs: 'center', sm: 'flex-start' }, minHeight: 56, px: { xs: 1, sm: 2 } }}
           >
-            <ListItemIcon sx={{ display: { xs: 'flex', sm: 'none' }, minWidth: 0, color: pathname === item.path ? 'primary.main' : 'inherit' }}>
+            <ListItemIcon sx={{ display: { xs: 'flex', sm: 'none' }, minWidth: 0, color: activePath === item.path ? 'primary.main' : 'inherit' }}>
               <item.icon />
             </ListItemIcon>
             <ListItemText sx={{ display: { xs: 'none', sm: 'block' } }}>{item.label}</ListItemText>

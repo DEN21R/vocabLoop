@@ -6,6 +6,8 @@ import {
   Typography,
   Select,
   MenuItem,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material'
 import MicIcon from '@mui/icons-material/Mic'
 import { getWords, WordCard, type IWord } from '../../../entities/word'
@@ -18,6 +20,7 @@ import {
   VoiceSettings,
 } from '../../../features/play-word'
 import { RecordWordDialog } from '../../../features/record-word'
+import { CreateSessionForm } from '../../../features/create-listening-session'
 
 type Status = 'loading' | 'success' | 'error'
 
@@ -56,6 +59,7 @@ function HomePage() {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<Status>('loading')
   const [words, setWords] = useState<IWord[]>([])
+  const [selectedWordIds, setSelectedWordIds] = useState<string[]>([])
   const [selectedVoices, setSelectedVoices] = useState(loadSelectedVoices)
   const [recordingWord, setRecordingWord] = useState<IWord | null>(null)
   const [translationSources, setTranslationSources] = useState<
@@ -98,6 +102,7 @@ function HomePage() {
   }
 
   const handleWordDeleted = (wordId: string) => {
+    setSelectedWordIds((ids) => ids.filter((id) => id !== wordId))
     setWords((previousWords) =>
       previousWords.filter((word) => word._id !== wordId),
     )
@@ -161,6 +166,7 @@ function HomePage() {
           <Dialog open={open} onClose={handleClickClose}>
             <AddWordForm onCreated={handleWordCreated} />
           </Dialog>
+          <CreateSessionForm wordIds={selectedWordIds} />
         </Box>
       )}
 
@@ -190,6 +196,17 @@ function HomePage() {
               }}
               key={word._id}
             >
+              <FormControlLabel
+                label="В сессию"
+                control={
+                  <Checkbox
+                    checked={selectedWordIds.includes(word._id)}
+                    onChange={(_, checked) => setSelectedWordIds((ids) =>
+                      checked ? [...ids, word._id] : ids.filter((id) => id !== word._id),
+                    )}
+                  />
+                }
+              />
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <WordCard el={word} />
                 {word.hasRecording && (
