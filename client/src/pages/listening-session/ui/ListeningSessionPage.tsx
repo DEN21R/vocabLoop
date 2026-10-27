@@ -4,6 +4,7 @@ import { Box, Button, Typography } from '@mui/material'
 import { getSession, type ListeningSession } from '../../../entities/listening-session'
 import { getWords, type IWord } from '../../../entities/word'
 import { EditSessionForm } from '../../../features/edit-listening-session'
+import { SessionPlayer } from '../../../features/play-listening-session'
 
 export default function ListeningSessionPage() {
   const { id } = useParams()
@@ -42,7 +43,21 @@ export default function ListeningSessionPage() {
           <Button onClick={() => setAttempt((value) => value + 1)}>Повторить</Button>
         </Box>
       )}
-      {status === 'success' && session && <EditSessionForm key={session._id} session={session} availableWords={words} />}
+      {status === 'success' && session && session._id === id && (
+        <Box key={session._id}>
+          <SessionPlayer
+            key={session.words.map((word) => word._id).join(',')}
+            words={session.words}
+            intervalSeconds={session.intervalSeconds}
+          />
+          <EditSessionForm
+            session={session}
+            availableWords={words}
+            onWordsChange={(next) => setSession((current) => current ? { ...current, words: next } : current)}
+            onIntervalSaved={(intervalSeconds) => setSession((current) => current ? { ...current, intervalSeconds } : current)}
+          />
+        </Box>
+      )}
     </Box>
   )
 }

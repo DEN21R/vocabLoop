@@ -7,9 +7,11 @@ import { updateSession } from '../api/updateSession'
 interface Props {
   session: Omit<ListeningSession, 'words'> & { words: IWord[] }
   availableWords: IWord[]
+  onWordsChange: (words: IWord[]) => void
+  onIntervalSaved: (intervalSeconds: number) => void
 }
 
-export default function EditSessionForm({ session, availableWords }: Props) {
+export default function EditSessionForm({ session, availableWords, onWordsChange, onIntervalSaved }: Props) {
   const [name, setName] = useState(session.name)
   const [interval, setInterval] = useState(String(session.intervalSeconds))
   const [words, setWords] = useState(session.words)
@@ -24,6 +26,7 @@ export default function EditSessionForm({ session, availableWords }: Props) {
     next[index] = next[target]
     next[target] = word
     setWords(next)
+    onWordsChange(next)
     setSaved(false)
   }
 
@@ -48,6 +51,7 @@ export default function EditSessionForm({ session, availableWords }: Props) {
         intervalSeconds,
       })
       setName(result.session.name)
+      onIntervalSaved(result.session.intervalSeconds)
       setSaved(true)
     } catch {
       setError('Не удалось сохранить. Возможно, одно из слов удалено из словаря. Обновите страницу или повторите попытку.')
@@ -85,7 +89,9 @@ export default function EditSessionForm({ session, availableWords }: Props) {
           <Button type="button" disabled={saving || index === 0} onClick={() => moveWord(index, -1)}>Выше</Button>
           <Button type="button" disabled={saving || index === words.length - 1} onClick={() => moveWord(index, 1)}>Ниже</Button>
           <Button type="button" disabled={saving} onClick={() => {
-            setWords(words.filter((item) => item._id !== word._id))
+            const next = words.filter((item) => item._id !== word._id)
+            setWords(next)
+            onWordsChange(next)
             setSaved(false)
           }}>Убрать из сессии</Button>
         </Box>
@@ -95,10 +101,15 @@ export default function EditSessionForm({ session, availableWords }: Props) {
       {otherWords.map((word) => (
         <Box key={word._id}>
           <Typography>{word.original} — {word.translation}</Typography>
-          <Button type="button" disabled={saving} onClick={() => { setWords([...words, word]); setSaved(false) }}>Добавить</Button>
+          <Button type="button" disabled={saving} onClick={() => {
+            const next = [...words, word]
+            setWords(next)
+            onWordsChange(next)
+            setSaved(false)
+          }}>Добавить</Button>
         </Box>
       ))}
-      <Typography variant="body2">Изменения применяются после сохранения. Удаление из сессии не удаляет слово из словаря.</Typography>
+      <Typography variant="body2">Состав и порядок меняются в плеере сразу. Для записи в базу нажмите «Сохранить изменения». Новый интервал применяется к следующей паузе после сохранения.</Typography>
       {error && <Typography color="error" role="alert">{error}</Typography>}
       {saved && <Typography role="status">Сессия сохранена</Typography>}
       <Button type="submit" variant="outlined" disabled={saving}>{saving ? 'Сохраняем…' : 'Сохранить изменения'}</Button>
