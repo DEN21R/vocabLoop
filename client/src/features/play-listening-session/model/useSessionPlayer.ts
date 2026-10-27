@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import type { IWord } from '../../../entities/word'
+import { getRecording, type IWord } from '../../../entities/word'
+import { playAudio } from '../../../shared/lib/audio/playAudio'
 import { prepareSpeech, speakText, stopSpeech } from '../../../shared/lib/tts/speech'
 
 type Status = 'stopped' | 'playing' | 'paused'
@@ -17,6 +18,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
   const remaining = useRef(0)
   const waitStarted = useRef(0)
   const waitRef = useRef<{ timer: ReturnType<typeof setTimeout>; finish: () => void } | null>(null)
+  const audioRef = useRef<ReturnType<typeof playAudio> | null>(null)
 
   useEffect(() => { intervalRef.current = intervalSeconds }, [intervalSeconds])
 
@@ -28,6 +30,8 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
       waitRef.current = null
     }
     stopSpeech()
+    audioRef.current?.stop()
+    audioRef.current = null
   }
 
   function stop() {
@@ -57,7 +61,9 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
     setError('')
 
     try {
-      await prepareSpeech(words.flatMap((word) => [word.sourceLanguage, word.targetLanguage]))
+      await prepareSpeech(words.flatMap((word) =>
+        word.hasRecording ? [word.sourceLanguage] : [word.sourceLanguage, word.targetLanguage],
+      ))
       if (currentRun !== runId.current) return
 
       // Используем те же голоса, которые выбраны на странице слов.
@@ -78,16 +84,26 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
           remaining.current = 0
           position.current = { index: (index + 1) % words.length, phase: 'original' }
         } else {
-          const language = phase === 'original' ? word.sourceLanguage : word.targetLanguage
-          const result = await speakText({
-            text: phase === 'original' ? word.original : word.translation,
-            language,
-            voiceURI: voices[language],
-          })
-          if (currentRun !== runId.current) return
-          if (result === 'cancelled') {
-            stop()
-            return
+          if (phase === 'translation' && word.hasRecording) {
+            const recording = await getRecording(word._id)
+            if (currentRun !== runId.current) return
+            const audio = playAudio(recording)
+            audioRef.current = audio
+            await audio.finished
+            if (currentRun !== runId.current) return
+            audioRef.current = null
+          } else {
+            const language = phase === 'original' ? word.sourceLanguage : word.targetLanguage
+            const result = await speakText({
+              text: phase === 'original' ? word.original : word.translation,
+              language,
+              voiceURI: voices[language],
+            })
+            if (currentRun !== runId.current) return
+            if (result === 'cancelled') {
+              stop()
+              return
+            }
           }
           position.current = { index, phase: phase === 'original' ? 'translation' : 'waiting' }
           if (phase === 'translation') remaining.current = intervalRef.current * 1000
@@ -110,6 +126,8 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
         waitRef.current = null
       }
       if (statusRef.current !== 'stopped') stopSpeech()
+      audioRef.current?.stop()
+      audioRef.current = null
     }
   }, [])
 

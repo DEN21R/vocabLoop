@@ -22,7 +22,7 @@ export default function SessionPlayer({ words, intervalSeconds }: { words: IWord
       </Button>
       <Button onClick={pause} disabled={status !== 'playing'}>Пауза</Button>
       <Button onClick={stop} disabled={status === 'stopped'}>Стоп</Button>
-      <Typography variant="body2">После паузы текущая реплика звучит заново. Используется браузерный голос.</Typography>
+      <Typography variant="body2">Если есть своя запись перевода, используется она. После паузы текущая реплика звучит заново.</Typography>
       {error && <Typography color="error" role="alert">{error}</Typography>}
     </Box>
   )
