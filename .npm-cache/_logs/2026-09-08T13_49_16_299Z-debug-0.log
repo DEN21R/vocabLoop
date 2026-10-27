@@ -1,0 +1,44 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.13.0
+2 info using node@v24.16.0
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\denr\Desktop\VocabLoop\client\.npmrc
+5 silly config load:file:C:\Users\denr\.npmrc
+6 silly config load:file:C:\Users\denr\Desktop\VocabLoop\client\etc\npmrc
+7 verbose title npm install @emotion/react @emotion/styled
+8 verbose argv "install" "@emotion/react" "@emotion/styled" "--prefix" "client" "--cache" ".npm-cache" "--fetch-retries" "0" "--fetch-timeout" "15000"
+9 verbose logfile logs-max:10 dir:C:\Users\denr\Desktop\VocabLoop\.npm-cache\_logs\2026-09-08T13_49_16_299Z-
+10 verbose logfile C:\Users\denr\Desktop\VocabLoop\.npm-cache\_logs\2026-09-08T13_49_16_299Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with ECONNREFUSED
+13 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+14 silly idealTree buildDeps
+15 silly fetch manifest @emotion/react@*
+16 silly packumentCache full:https://registry.npmjs.org/@emotion%2freact cache-miss
+17 silly fetch manifest @emotion/styled@*
+18 silly packumentCache full:https://registry.npmjs.org/@emotion%2fstyled cache-miss
+19 silly placeDep ROOT @emotion/react@ OK for: client@0.0.0 want: *
+20 silly placeDep ROOT @emotion/styled@ OK for: client@0.0.0 want: *
+21 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+22 verbose stack Error: request to https://registry.npmjs.org/@emotion%2freact failed: cache mode is 'only-if-cached' but no cached response is available.
+22 verbose stack     at cacheFetch (C:\Program Files\nodejs\node_modules\npm\node_modules\make-fetch-happen\lib\cache\index.js:12:13)
+22 verbose stack     at async fetch (C:\Program Files\nodejs\node_modules\npm\node_modules\make-fetch-happen\lib\fetch.js:98:7)
+22 verbose stack     at async RegistryFetcher.packument (C:\Program Files\nodejs\node_modules\npm\node_modules\pacote\lib\registry.js:90:19)
+22 verbose stack     at async RegistryFetcher.manifest (C:\Program Files\nodejs\node_modules\npm\node_modules\pacote\lib\registry.js:128:23)
+22 verbose stack     at async #fetchManifest (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\arborist\build-ideal-tree.js:1217:20)
+22 verbose stack     at async #nodeFromEdge (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\arborist\build-ideal-tree.js:1054:19)
+22 verbose stack     at async #buildDepStep (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\arborist\build-ideal-tree.js:917:11)
+22 verbose stack     at async Arborist.buildIdealTree (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\arborist\build-ideal-tree.js:170:7)
+22 verbose stack     at async Promise.all (index 1)
+22 verbose stack     at async Arborist.reify (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\arborist\reify.js:111:5)
+23 error code ENOTCACHED
+24 error request to https://registry.npmjs.org/@emotion%2freact failed: cache mode is 'only-if-cached' but no cached response is available.
+25 silly unfinished npm timer reify 1788875357240
+26 silly unfinished npm timer reify:loadTrees 1788875357241
+27 verbose cwd C:\Users\denr\Desktop\VocabLoop
+28 verbose os Windows_NT 10.0.19045
+29 verbose node v24.16.0
+30 verbose npm  v11.13.0
+31 verbose exit 1
+32 verbose code 1
+33 error A complete log of this run can be found in: C:\Users\denr\Desktop\VocabLoop\.npm-cache\_logs\2026-09-08T13_49_16_299Z-debug-0.log
