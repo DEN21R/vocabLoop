@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getRecording, type IWord } from '../../../entities/word'
-import { playAudio } from '../../../shared/lib/audio/playAudio'
+import { playAudio, unlockAudio } from '../../../shared/lib/audio/playAudio'
 import { prepareSpeech, speakText, stopSpeech } from '../../../shared/lib/tts/speech'
 
 type Status = 'stopped' | 'playing' | 'paused'
@@ -19,6 +19,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
   const waitStarted = useRef(0)
   const waitRef = useRef<{ timer: ReturnType<typeof setTimeout>; finish: () => void } | null>(null)
   const audioRef = useRef<ReturnType<typeof playAudio> | null>(null)
+  const audioElementRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => { intervalRef.current = intervalSeconds }, [intervalSeconds])
 
@@ -61,6 +62,17 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
     setError('')
 
     try {
+      // Must call play() before any await while handling the user's click.
+      // Handle rejection immediately; report it when the recording phase starts.
+      let audioReady: Promise<unknown> = Promise.resolve(null)
+      if (words.some((word) => word.hasRecording)) {
+        const element = audioElementRef.current ?? new Audio()
+        audioElementRef.current = element
+        const unlock = unlockAudio(element)
+        audioRef.current = unlock
+        audioReady = unlock.finished.then(() => null, (error: unknown) => error)
+      }
+
       await prepareSpeech(words.flatMap((word) =>
         word.hasRecording ? [word.sourceLanguage] : [word.sourceLanguage, word.targetLanguage],
       ))
@@ -85,9 +97,12 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
           position.current = { index: (index + 1) % words.length, phase: 'original' }
         } else {
           if (phase === 'translation' && word.hasRecording) {
+            const unlockError = await audioReady
+            if (currentRun !== runId.current) return
+            if (unlockError) throw unlockError
             const recording = await getRecording(word._id)
             if (currentRun !== runId.current) return
-            const audio = playAudio(recording)
+            const audio = playAudio(recording, audioElementRef.current!)
             audioRef.current = audio
             await audio.finished
             if (currentRun !== runId.current) return
@@ -128,6 +143,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
       if (statusRef.current !== 'stopped') stopSpeech()
       audioRef.current?.stop()
       audioRef.current = null
+      audioElementRef.current = null
     }
   }, [])
 
