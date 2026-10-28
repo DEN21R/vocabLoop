@@ -4,6 +4,9 @@ import { connectDB } from '../server/src/config/db.js'
 export default async function handler(req, res) {
   try {
     await connectDB()
+
+    req.url = req.url.replace(/^\/api(?=\/|$)/, '') || '/'
+
     return app(req, res)
   } catch (error) {
     console.error('MongoDB connection failed:', error)
