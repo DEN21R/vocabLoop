@@ -100,8 +100,13 @@ export function speakText({
     utterance.lang = voice.lang
 
     let settled = false
+    let started = false
+    let elapsed = 0
+    const timeoutMs = Math.max(30000, text.length * 500)
 
     const cleanup = () => {
+      clearInterval(watchdog)
+      utterance.onstart = null
       utterance.onend = null
       utterance.onerror = null
 
@@ -118,23 +123,54 @@ export function speakText({
       resolve(result)
     }
 
+    const fail = (error: Error) => {
+      if (settled) return
+
+      settled = true
+      cleanup()
+      reject(error)
+    }
+
+    // Some speech engines finish speaking without delivering the end event.
+    // Only recover after start, so a queued utterance is never skipped.
+    const watchdog = setInterval(() => {
+      const synth = window.speechSynthesis
+      if (synth.paused) return
+
+      if (started && !synth.speaking && !synth.pending) {
+        finish('finished')
+        return
+      }
+
+      elapsed += 250
+      if (elapsed >= timeoutMs) {
+        fail(new Error('Движок озвучивания не ответил. Запустите воспроизведение снова.'))
+        synth.cancel()
+        synth.resume()
+      }
+    }, 250)
+
+    utterance.onstart = () => {
+      started = true
+    }
+
     utterance.onend = () => {
       finish('finished')
     }
 
     utterance.onerror = (event) => {
-      if (settled) return
-
-      settled = true
-      cleanup()
-      reject(new Error(`Ошибка озвучивания: ${event.error}`))
+      fail(new Error(`Ошибка озвучивания: ${event.error}`))
     }
 
     activeSpeech = {
       utterance,
       cancel: () => finish('cancelled'),
     }
-    window.speechSynthesis.speak(utterance)
+    try {
+      window.speechSynthesis.speak(utterance)
+    } catch (error) {
+      fail(error instanceof Error ? error : new Error('Не удалось запустить озвучивание'))
+    }
   })
 }
 
