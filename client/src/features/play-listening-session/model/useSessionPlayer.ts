@@ -42,6 +42,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
     remaining.current = 0
     setProgress(position.current)
     setStatus('stopped')
+    setError('')
   }
 
   function pause() {
@@ -52,6 +53,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number) {
     cancelRun()
     statusRef.current = 'paused'
     setStatus('paused')
+    setError('')
   }
 
   async function play() {

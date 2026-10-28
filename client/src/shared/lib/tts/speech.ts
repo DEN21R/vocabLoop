@@ -159,6 +159,12 @@ export function speakText({
     }
 
     utterance.onerror = (event) => {
+      // Browsers can report cancel() as either canceled or interrupted.
+      // Neither means that the voice or the speech engine failed.
+      if (event.error === 'canceled' || event.error === 'interrupted') {
+        finish('cancelled')
+        return
+      }
       fail(new Error(`Ошибка озвучивания: ${event.error}`))
     }
 

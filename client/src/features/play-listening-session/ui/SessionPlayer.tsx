@@ -14,11 +14,6 @@ export default function SessionPlayer({
     intervalSeconds,
   )
   const word = words[progress.index]
-  const phases = {
-    original: 'Слово',
-    translation: 'Перевод',
-    waiting: 'Ожидание',
-  }
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -36,7 +31,6 @@ export default function SessionPlayer({
           {' · '}
           {progress.index + 1} / {words.length}: {word?.original} —{' '}
           {word?.translation}
-          {status !== 'stopped' && ` · ${phases[progress.phase]}`}
         </Typography>
       }
       <Button
