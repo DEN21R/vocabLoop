@@ -5,6 +5,20 @@ let activeSpeech: {
   cancel: () => void
 } | null = null
 
+export function normalizeLanguage(language: string): string {
+  return language.trim().replace(/_/g, '-').toLowerCase()
+}
+
+export function getVoicesByLanguage(voices: SpeechSynthesisVoice[], language: string): SpeechSynthesisVoice[] {
+  const baseLanguage = normalizeLanguage(language).split('-')[0]
+  return voices.filter((voice) => normalizeLanguage(voice.lang).split('-')[0] === baseLanguage)
+}
+
+function findVoice(voices: SpeechSynthesisVoice[], language: string): SpeechSynthesisVoice | undefined {
+  return voices.find((voice) => normalizeLanguage(voice.lang) === normalizeLanguage(language)) ??
+    getVoicesByLanguage(voices, language)[0]
+}
+
 export async function prepareSpeech(languages: string[]): Promise<void> {
   if (
     !('speechSynthesis' in window) ||
@@ -12,48 +26,37 @@ export async function prepareSpeech(languages: string[]): Promise<void> {
   ) {
     throw new Error('Браузер не поддерживает озвучивание')
   }
-  let voices = window.speechSynthesis.getVoices()
-
-  if (voices.length === 0) {
-    voices = await new Promise<SpeechSynthesisVoice[]>((res, rej) => {
+  const missingLanguage = (voices: SpeechSynthesisVoice[]) => languages.find((language) => !findVoice(voices, language))
+  if (missingLanguage(window.speechSynthesis.getVoices()) !== undefined) {
+    await new Promise<void>((res, rej) => {
       const synth = window.speechSynthesis
 
       const cleanup = () => {
         clearTimeout(timer)
+        clearInterval(poll)
         synth.removeEventListener('voiceschanged', checkVoices)
       }
       const checkVoices = () => {
         const loadedVoices = synth.getVoices()
 
-        if (loadedVoices.length > 0) {
+        if (missingLanguage(loadedVoices) === undefined) {
           cleanup()
-          res(loadedVoices)
+          res()
         }
       }
 
+      const poll = setInterval(checkVoices, 500)
       const timer = setTimeout(() => {
+        const loadedVoices = synth.getVoices()
+        const missing = missingLanguage(loadedVoices)
         cleanup()
-        rej(new Error('Не удалось загрузить голоса'))
-      }, 3000)
+        if (missing === undefined) res()
+        else rej(new Error(loadedVoices.length === 0 ? 'Браузер не предоставил голоса. Проверьте системный TTS и повторите попытку.' : `Нет голоса для языка: ${missing}`))
+      }, 10000)
 
       synth.addEventListener('voiceschanged', checkVoices)
       checkVoices()
     })
-  }
-
-  for (const language of languages) {
-    const normalizedLanguage = language.toLowerCase()
-
-    const voice =
-      voices.find((voice) => voice.lang.toLowerCase() === normalizedLanguage) ??
-      voices.find(
-        (voice) =>
-          voice.lang.toLowerCase().split('-')[0] ===
-          normalizedLanguage.split('-')[0],
-      )
-    if (!voice) {
-      throw new Error(`Нет голоса для языка: ${language}`)
-    }
   }
 }
 
@@ -74,20 +77,11 @@ export function speakText({
 
     const voices = window.speechSynthesis.getVoices()
 
-    const normalizedLanguage = language.toLowerCase()
-
     const selectedVoice = voices.find((condidate) => {
       return condidate.voiceURI === voiceURI
     })
 
-    const voice =
-      selectedVoice ??
-      voices.find((voice) => voice.lang.toLowerCase() === normalizedLanguage) ??
-      voices.find(
-        (voice) =>
-          voice.lang.toLowerCase().split('-')[0] ===
-          normalizedLanguage.split('-')[0],
-      )
+    const voice = selectedVoice ?? findVoice(voices, language)
 
     if (!voice) {
       reject(new Error(`Нет голоса для языка: ${language}`))
@@ -97,7 +91,7 @@ export function speakText({
     const utterance = new SpeechSynthesisUtterance(text)
 
     utterance.voice = voice
-    utterance.lang = voice.lang
+    utterance.lang = normalizeLanguage(voice.lang)
 
     let settled = false
     let started = false

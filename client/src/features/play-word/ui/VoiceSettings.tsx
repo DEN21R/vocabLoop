@@ -1,6 +1,6 @@
 import { Box, Typography, Button, Menu, MenuItem } from '@mui/material'
 import { useEffect, useState } from 'react'
-import { getAvailableVoices } from '../../../shared/lib/tts/speech'
+import { getAvailableVoices, getVoicesByLanguage } from '../../../shared/lib/tts/speech'
 
 type VoiceSettingsProps = {
   selectedVoices: {
@@ -19,28 +19,22 @@ const languages = [
   { code: 'uk', label: 'Украинский' },
 ] as const
 
-function getVoicesByLanguage(
-  allVoices: SpeechSynthesisVoice[],
-  language: string,
-) {
-  const filteredVoices = allVoices.filter((v) => {
-    const languageCode = v.lang.split('-')[0]
-    return languageCode === language
-  })
-  return filteredVoices
-}
-
 export function VoiceSettings({
   selectedVoices,
   onVoiceChange,
 }: VoiceSettingsProps) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+  const [voicesLoading, setVoicesLoading] = useState(() => 'speechSynthesis' in window && getAvailableVoices().length === 0)
   const [selectedLanguage, setSelectedLanguage] = useState<
     'en' | 'ru' | 'de' | 'uk' | null
   >(null)
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const menuOpen = anchorEl !== null
 
   function openMenu(button: HTMLElement) {
+    const available = getAvailableVoices()
+    setVoices(available)
+    setVoicesLoading('speechSynthesis' in window && available.length === 0)
     setAnchorEl(button)
     setSelectedLanguage(null)
   }
@@ -61,17 +55,27 @@ export function VoiceSettings({
     if (!('speechSynthesis' in window)) return
 
     const updateVoices = () => {
-      setVoices(getAvailableVoices())
+      const available = getAvailableVoices()
+      setVoices(available)
+      if (available.length > 0) setVoicesLoading(false)
     }
 
     window.speechSynthesis.addEventListener('voiceschanged', updateVoices)
-
+    // Android may initialize TTS without delivering voiceschanged reliably.
+    const poll = setInterval(updateVoices, 500)
+    const timeout = setTimeout(() => {
+      clearInterval(poll)
+      updateVoices()
+      setVoicesLoading(false)
+    }, 10000)
     updateVoices()
 
     return () => {
       window.speechSynthesis.removeEventListener('voiceschanged', updateVoices)
+      clearInterval(poll)
+      clearTimeout(timeout)
     }
-  }, [])
+  }, [menuOpen])
 
   let filteredVoices: SpeechSynthesisVoice[] = []
 
@@ -103,6 +107,14 @@ export function VoiceSettings({
       </Button>
 
       <Menu anchorEl={anchorEl} open={anchorEl !== null} onClose={closeMenu}>
+        {voices.length === 0 && (
+          <MenuItem disabled>
+            {voicesLoading ? 'Голоса загружаются…' : 'Браузер не предоставил голоса. Проверьте системный TTS.'}
+          </MenuItem>
+        )}
+        {selectedLanguage !== null && voices.length > 0 && filteredVoices.length === 0 && (
+          <MenuItem disabled>Нет голосов выбранного языка</MenuItem>
+        )}
         {selectedLanguage === null &&
           languages.map((language) => (
             <MenuItem
