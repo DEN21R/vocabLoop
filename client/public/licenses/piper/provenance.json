@@ -1,0 +1,81 @@
+{
+  "checkedOn": "2026-10-29",
+  "npmPackage": "@diffusionstudio/piper-wasm@1.0.0",
+  "npmGitHead": "69522c832bd52d7c16389e9a8aee568065027689",
+  "materials": [
+    {
+      "file": "ONNX-Runtime-MIT.txt",
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.18.0/LICENSE",
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+      "bytes": 1073
+    },
+    {
+      "file": "ONNX-Runtime-ThirdPartyNotices.txt",
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.18.0/ThirdPartyNotices.txt",
+      "sha256": "10fc98a2f4d478e981813d594e23d7e31b0430e66501a658c1ecab2a226a4b52",
+      "bytes": 338538
+    },
+    {
+      "file": "GPL-3.0.txt",
+      "url": "https://raw.githubusercontent.com/rhasspy/espeak-ng/0f65aa301e0d6bae5e172cc74197d32a6182200f/COPYING",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "bytes": 35147
+    },
+    {
+      "file": "Piper-Phonemize-MIT.txt",
+      "url": "https://raw.githubusercontent.com/wide-video/piper-phonemize/cfff8e52ebaea37c7e953ae2d06b174acb827ac4/LICENSE.md",
+      "sha256": "13746d509d74e55ea2265fbef204bb7cdbf84a8315b0207e988326cb54387028",
+      "bytes": 1071
+    },
+    {
+      "file": "CC0-1.0.txt",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt",
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "bytes": 7048
+    },
+    {
+      "file": "UPSTREAM-BUILD.txt",
+      "url": "https://raw.githubusercontent.com/diffusionstudio/piper-wasm/69522c832bd52d7c16389e9a8aee568065027689/README.md",
+      "sha256": "f840820a5733d096abe5ce5e526b1a74aa84ba6f47fbe96faf13606b91e106a3",
+      "bytes": 2057
+    },
+    {
+      "file": "en_US-ljspeech-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/en/en_US/ljspeech/medium/MODEL_CARD",
+      "sha256": "fbee1529c89d36b3fe76d7e9f3f832dce17f44900a52d76a9bda735654766b4d",
+      "bytes": 517
+    },
+    {
+      "file": "de_DE-thorsten-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/de/de_DE/thorsten/medium/MODEL_CARD",
+      "sha256": "5196b5ab0794e6056263a1f37c18bec407b61ac187529bee29d1c366871e5c9e",
+      "bytes": 285
+    },
+    {
+      "file": "ru_RU-denis-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/ru/ru_RU/denis/medium/MODEL_CARD",
+      "sha256": "f037c8ec8b6574de644bf9e5916c749e83d4ff297facd97895b56d733f6ba3fe",
+      "bytes": 275
+    },
+    {
+      "file": "uk_UA-ukrainian_tts-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/uk/uk_UA/ukrainian_tts/medium/MODEL_CARD",
+      "sha256": "cb77fd7742b78f3bdfd2457c7ef712cfb153193af3b21325821df4ca8d8030de",
+      "bytes": 266
+    }
+  ],
+  "binaries": [
+    {
+      "url": "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.wasm",
+      "bytes": 635212,
+      "sha256": "b777cd107a91d2bcc6a1ea46f2c26a662a7407394fe84589198aeaa83dd7a9d6",
+      "gitBlob": "a5cb3b51b11d9a52319841bf99701d42f2c62fb0"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.data",
+      "bytes": 18077249,
+      "sha256": "29f1025eb23a5b5c192cd14a6efbce4509402ff265405072ee6f7d1a09b78f8c",
+      "gitBlob": "b193ff2a88bd16cd687b3117310a2613ad7749df"
+    }
+  ]
+}

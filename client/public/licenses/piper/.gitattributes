@@ -1,0 +1,2 @@
+# Preserve the downloaded upstream license/build/model-card bytes verbatim.
+*.txt -text

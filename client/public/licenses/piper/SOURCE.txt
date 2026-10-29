@@ -1,0 +1,90 @@
+SOURCE ACCESS FOR THE PIPER PHONEMIZER / ESPEAK NG
+
+No fee, account or license purchase is required for the source downloads below.
+The source is supplied on the upstream authors' servers. Keep these directions
+with copies of the binaries. The GPLv3 text is supplied locally in GPL-3.0.txt.
+
+Binary identity
+--------------
+The probe downloads @diffusionstudio/piper-wasm@1.0.0 from jsDelivr.
+Its npm gitHead is 69522c832bd52d7c16389e9a8aee568065027689.
+Both piper_phonemize.wasm and piper_phonemize.data have been checked against
+the Git blob hashes in that exact upstream commit. SHA-256 hashes and license
+file origins are recorded in provenance.json. No binaries were added here.
+
+Publisher's package, generated glue, original build instructions and binaries:
+https://github.com/diffusionstudio/piper-wasm/tree/69522c832bd52d7c16389e9a8aee568065027689
+Download:
+https://codeload.github.com/diffusionstudio/piper-wasm/tar.gz/69522c832bd52d7c16389e9a8aee568065027689
+The build instructions are also copied verbatim to UPSTREAM-BUILD.txt.
+
+Piper phonemizer source and CMake build scripts
+---------------------------------------------
+The publisher's recipe clones wide-video/piper-phonemize. This repository's
+last commit before the package publication (and current last commit) is:
+cfff8e52ebaea37c7e953ae2d06b174acb827ac4 (2024-04-02).
+https://github.com/wide-video/piper-phonemize/tree/cfff8e52ebaea37c7e953ae2d06b174acb827ac4
+Download the complete source, headers, Unicode tables, licenses and scripts:
+https://codeload.github.com/wide-video/piper-phonemize/tar.gz/cfff8e52ebaea37c7e953ae2d06b174acb827ac4
+
+eSpeak NG library source
+------------------------
+The above CMakeLists.txt pins this exact eSpeak NG revision:
+0f65aa301e0d6bae5e172cc74197d32a6182200f
+https://github.com/rhasspy/espeak-ng/tree/0f65aa301e0d6bae5e172cc74197d32a6182200f
+Download the complete C/C++ source, headers, language/dictionary source,
+build/configuration scripts and license notices:
+https://codeload.github.com/rhasspy/espeak-ng/tar.gz/0f65aa301e0d6bae5e172cc74197d32a6182200f
+
+eSpeak NG data-generation checkout
+---------------------------------
+The original recipe separately clones rhasspy/espeak-ng to generate data.
+Its last HEAD before publication was 8593723f10cfd9befd50de447f14bf0a9d2a14a4
+(2023-11-27); this is distinct from the library revision pinned by CMake.
+Both complete source snapshots are therefore provided, not just one.
+https://github.com/rhasspy/espeak-ng/tree/8593723f10cfd9befd50de447f14bf0a9d2a14a4
+Download:
+https://codeload.github.com/rhasspy/espeak-ng/tar.gz/8593723f10cfd9befd50de447f14bf0a9d2a14a4
+
+How to build / change the component
+----------------------------------
+Follow UPSTREAM-BUILD.txt with Emscripten SDK 3.1.47. At each clone, check out
+the corresponding revision above before continuing. The recipe includes the
+local source edits, configure/CMake options, the espeak-ng-data preload and
+the Emscripten command that exports createPiperPhonemize, callMain and FS.
+Do not discard those edits when rebuilding. They are part of the build recipe.
+Build tools are required only to rebuild the upstream component, not to use
+Vocabloop or to synthesize on a phone. A bit-for-bit rebuild is not claimed.
+Emscripten SDK version / source:
+https://github.com/emscripten-core/emsdk/tree/3.1.47
+https://github.com/emscripten-core/emscripten/tree/3.1.47
+
+Browser wrapper and runtime source
+----------------------------------
+@diffusionstudio/vits-web@1.0.3 npm gitHead:
+https://github.com/diffusionstudio/vits-web/tree/c1509fcae36333d6c2aef08bfd0826727a0d2eea
+https://codeload.github.com/diffusionstudio/vits-web/tar.gz/c1509fcae36333d6c2aef08bfd0826727a0d2eea
+ONNX Runtime 1.18.0 source / notices:
+https://github.com/microsoft/onnxruntime/tree/v1.18.0
+https://codeload.github.com/microsoft/onnxruntime/tar.gz/refs/tags/v1.18.0
+
+Vocabloop integration source and changes
+---------------------------------------
+The new Piper integration, UI and tests are available in this repository:
+https://github.com/DEN21R/vocabLoop/tree/main/client/src/features/play-listening-session
+https://github.com/DEN21R/vocabLoop/tree/main/client/tests
+See PIPER-INTEGRATION-LICENSE.txt for the scope of its GPLv3 grant.
+Changes: a separate optional test UI and Worker; the Ukrainian adapter uses
+Unicode text phonemes from the unchanged uk_UA-ukrainian_tts-medium config,
+instead of passing eSpeak's universal IDs to the old lada-x_low model.
+The upstream WASM, eSpeak source and voice weights are unmodified.
+
+Rights / warranty
+-----------------
+eSpeak NG includes Copyright (C) 2005-2012 Jonathan Duddington and copyrights
+of the contributors named in the source files. It is free software under
+GNU GPL version 3 or, where the original notices allow, any later version.
+You may copy, modify and redistribute it under those terms. There is NO
+WARRANTY, including no implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. Preserve original copyright and license notices.
+See the full supplied GPL-3.0.txt, particularly source access under section 6.

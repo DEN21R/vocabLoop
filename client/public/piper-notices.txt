@@ -1,0 +1,63 @@
+Vocabloop browser Piper probe - licenses and source access
+
+Browsable license/source page: licenses/piper/index.html
+Complete source access and build directions: licenses/piper/SOURCE.txt
+Full GPLv3 text and rights/warranty notices: licenses/piper/GPL-3.0.txt
+New integration contribution: licenses/piper/PIPER-INTEGRATION-LICENSE.txt
+Full ONNX Runtime MIT license: licenses/piper/ONNX-Runtime-MIT.txt
+Upstream third-party notices: licenses/piper/ONNX-Runtime-ThirdPartyNotices.txt
+Npm dependency licenses: licenses/piper/NPM-LICENSES.txt
+The upstream build recipe, fixed source archive links and binary hashes are
+provided alongside these texts. No registration or payment is required.
+
+Browser wrapper: @diffusionstudio/vits-web 1.0.3, MIT (package metadata).
+Author: Konstantin Paulus. Source:
+https://github.com/diffusionstudio/vits-web
+Runtime: onnxruntime-web 1.18.0, MIT. Copyright Microsoft Corporation.
+https://github.com/microsoft/onnxruntime/tree/v1.18.0
+https://github.com/microsoft/onnxruntime/blob/v1.18.0/LICENSE
+
+IMPORTANT: the MIT wrapper is not a license for all of its components.
+The upstream Piper phonemizer WASM contains eSpeak NG under GPLv3.
+Source/build instructions and licenses:
+https://github.com/diffusionstudio/piper-wasm
+https://github.com/wide-video/piper-phonemize
+https://github.com/rhasspy/espeak-ng
+https://github.com/rhasspy/espeak-ng/blob/master/COPYING
+Do not describe this whole stack as MIT. The GPL-covered components may be
+copied, modified and redistributed under the supplied GPL terms, WITHOUT ANY
+WARRANTY, including MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+The new Piper integration contribution is supplied under GPLv3 as described
+in PIPER-INTEGRATION-LICENSE.txt. Unrelated app files/assets are unchanged.
+
+The Ukrainian adapter uses Unicode text phonemes from the model config,
+not eSpeak IDs. The weights/config are unmodified and pinned to revision:
+840e38a7e26d813bd6221b78cfbaefa3585b3f71
+
+Voice repository declares MIT:
+https://huggingface.co/diffusionstudio/piper-voices/blob/main/README.md
+Individual MODEL_CARD dataset licenses (these are not a blanket MIT claim):
+
+EN: en_US-ljspeech-medium. Dataset: LJ Speech, public domain.
+https://huggingface.co/diffusionstudio/piper-voices/blob/main/en/en_US/ljspeech/medium/MODEL_CARD
+https://keithito.com/LJ-Speech-Dataset/
+
+DE: de_DE-thorsten-medium. Dataset: Thorsten, CC0.
+MODEL_CARD states finetuning from Lessac medium.
+https://huggingface.co/diffusionstudio/piper-voices/blob/main/de/de_DE/thorsten/medium/MODEL_CARD
+https://github.com/thorstenMueller/Thorsten-Voice
+
+RU: ru_RU-denis-medium. Dataset: voice-datasets, CC0.
+MODEL_CARD states finetuning from Lessac medium.
+https://huggingface.co/diffusionstudio/piper-voices/blob/main/ru/ru_RU/denis/medium/MODEL_CARD
+https://github.com/OHF-Voice/voice-datasets
+
+UK: uk_UA-ukrainian_tts-medium, speaker lada (0).
+Dataset: Ukrainian voice-datasets, CC0. Trained from scratch; text phonemes.
+https://huggingface.co/diffusionstudio/piper-voices/blob/840e38a7e26d813bd6221b78cfbaefa3585b3f71/uk/uk_UA/ukrainian_tts/medium/MODEL_CARD
+https://github.com/OHF-Voice/voice-datasets
+
+No NonCommercial voices (e.g. ruslan/hfc_female) are selected.
+Models are downloaded only on request. EN/DE/RU use the wrapper's OPFS cache;
+UK uses CacheStorage with a pinned URL. Storage restrictions/eviction may
+cause another download. WASM is fetched from the upstream library's CDNs.

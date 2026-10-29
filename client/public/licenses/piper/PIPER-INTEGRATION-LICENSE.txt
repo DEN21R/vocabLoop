@@ -1,0 +1,22 @@
+Vocabloop experimental Piper integration
+Copyright (C) 2026 Vocabloop contributors
+
+The following new integration files are licensed under the GNU General Public
+License version 3. You may copy, modify and redistribute them under that license.
+
+client/src/features/play-listening-session/model/piperProbe.ts
+client/src/features/play-listening-session/model/piperProbe.worker.ts
+client/src/features/play-listening-session/model/piperText.ts
+client/src/features/play-listening-session/model/piperUkrainian.ts
+client/src/features/play-listening-session/ui/PiperAudioProbe.tsx
+client/tests/piper-text.test.cjs
+client/tests/piper-browser-smoke.mjs
+
+This software is provided WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+The complete license is supplied in GPL-3.0.txt beside this notice.
+Source access and build materials are described in SOURCE.txt.
+
+This grant covers the new Piper integration contribution listed above.
+It does not claim ownership of upstream packages, voice datasets, or unrelated
+Vocabloop files/assets, whose rights and original notices remain unchanged.

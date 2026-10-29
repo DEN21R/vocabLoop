@@ -5,6 +5,7 @@ import { getSession, type ListeningSession } from '../../../entities/listening-s
 import { getWords, type IWord } from '../../../entities/word'
 import { EditSessionForm } from '../../../features/edit-listening-session'
 import { SessionPlayer } from '../../../features/play-listening-session'
+import { PiperAudioProbe } from '../../../features/play-listening-session/ui/PiperAudioProbe'
 
 export default function ListeningSessionPage() {
   const { id } = useParams()
@@ -50,6 +51,7 @@ export default function ListeningSessionPage() {
             words={session.words}
             intervalSeconds={session.intervalSeconds}
           />
+          <PiperAudioProbe />
           <EditSessionForm
             session={session}
             availableWords={words}
