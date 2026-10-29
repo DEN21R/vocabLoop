@@ -40,3 +40,11 @@ test('every local link on the phone license page resolves to a supplied public f
     assert(existsSync(target), link)
   }
 })
+
+test('additional voices retain attribution and full Creative Commons terms', () => {
+  assert.match(read('CC-BY-4.0.txt'), /Attribution 4.0 International/)
+  assert.match(read('CC-BY-SA-4.0.txt'), /Attribution-ShareAlike 4.0 International/)
+  assert.match(read('VOICE-SELECTION.txt'), /Copyright 2018, 2019 Google, Inc/)
+  assert.match(read('VOICE-SELECTION.txt'), /Valentini-Botinhao, Cassia; Yamagishi, Junichi/)
+  assert.match(read('Alba-dataset-license.txt'), /moral rights/)
+})

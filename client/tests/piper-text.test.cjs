@@ -20,7 +20,7 @@ const config = {
   phoneme_type: 'text', num_symbols: 256,
   phoneme_id_map: { _: [0], '^': [1], $: [2], "'": [5], в: [14], ґ: [16], є: [19], и: [22], і: [23], п: [31], р: [32], т: [34], '́': [45], '̆': [46], '̈': [47] },
   audio: { sample_rate: 22050 }, inference: { noise_scale: 0.667, length_scale: 1, noise_w: 0.8 },
-  speaker_id_map: { lada: 0 },
+  speaker_id_map: { lada: 0, mykyta: 1, tetiana: 2 },
 }
 
 test('Ukrainian text uses model IDs with native Piper BOS/pad/EOS, never eSpeak 142', () => {
@@ -64,8 +64,8 @@ test('Piper diagnostics retain original error type/message, stage, language and 
   for (const expected of ['SyntaxError', 'Unexpected end of JSON input', 'config', 'en_US-ljspeech-medium']) assert(message.includes(expected))
   assert(piperError(new DOMException('Connection lost', 'NetworkError'), { language: 'uk', stage: 'model' }).includes('NetworkError: Connection lost'))
 })
-for (const runFails of [false, true]) {
-  test(`Ukrainian adapter runs without storage and releases its ONNX session on ${runFails ? 'failure' : 'success'}`, async () => {
+for (const [speaker, sid] of Object.entries(config.speaker_id_map)) for (const runFails of [false, true]) {
+  test(`Ukrainian ${speaker} runs without storage and releases its ONNX session on ${runFails ? 'failure' : 'success'}`, async () => {
     let released = 0
     let received
     class Tensor { constructor(type, data, dimensions) { Object.assign(this, { type, data, dimensions }) } }
@@ -79,12 +79,42 @@ for (const runFails of [false, true]) {
       caches: { open() { throw Error('storage disabled') } },
       fetch: async (url) => url.endsWith('.json') ? Response.json(config) : new Response(new Uint8Array([1, 2, 3])),
     })
-    const promise = predictUkrainian('привіт', () => {})
+    const promise = predictUkrainian('привіт', () => {}, speaker)
     if (runFails) await assert.rejects(promise, /inference failed/)
     else assert.equal((await promise).type, 'audio/wav')
     assert.equal(released, 1)
-    assert.deepEqual([...received.sid.data], [0n])
+    assert.deepEqual([...received.sid.data], [BigInt(sid)])
     assert.deepEqual([...received.input.data], textPhonemeIds('привіт', config).map(BigInt))
     assert.equal(ort.env.wasm.numThreads, 1)
   })
 }
+
+test('every listed voice validates only for its language and retains model/speaker identity', () => {
+  const { PIPER_VOICES, validatePiperRequest, piperError } = load('piperProbe.ts')
+  for (const [language, entry] of Object.entries(PIPER_VOICES)) for (const voice of entry.voices) {
+    const result = validatePiperRequest({ language, text: entry.word, voice: voice.id })
+    assert.equal(result.voiceId, voice.modelId)
+    assert.equal(result.speaker, voice.speaker)
+    assert.equal(result.choiceId, voice.id)
+    assert(piperError(Error('test'), { language, voice: voice.id, stage: 'model' }).includes(voice.modelId))
+    const other = language === 'en' ? 'uk' : 'en'
+    assert.throws(() => validatePiperRequest({ language: other, text: 'test', voice: voice.id }))
+  }
+  assert.throws(() => validatePiperRequest({ language: 'en', text: 'test', voice: 'unlisted' }))
+})
+
+test('voice preferences round-trip per language and recover from invalid/blocked storage', () => {
+  const { PIPER_VOICES, PIPER_SELECTION_KEY, loadPiperSelections, savePiperSelections } = load('piperProbe.ts')
+  let saved
+  const storage = { getItem: () => saved, setItem: (key, value) => { assert.equal(key, PIPER_SELECTION_KEY); saved = value } }
+  const defaults = loadPiperSelections(storage)
+  const choices = Object.fromEntries(Object.entries(PIPER_VOICES).map(([lang, entry]) => [lang, entry.voices.at(-1).id]))
+  savePiperSelections(choices, storage)
+  assert.deepEqual(loadPiperSelections(storage), choices)
+  saved = JSON.stringify({ en: choices.ru, uk: 'deleted-voice', ru: choices.ru })
+  assert.deepEqual(loadPiperSelections(storage), { ...defaults, ru: choices.ru })
+  for (saved of ['{', 'null', '[]']) assert.deepEqual(loadPiperSelections(storage), defaults)
+  const blocked = { getItem() { throw Error('SecurityError') }, setItem() { throw Error('QuotaExceededError') } }
+  assert.deepEqual(loadPiperSelections(blocked), defaults)
+  assert.doesNotThrow(() => savePiperSelections(choices, blocked))
+})

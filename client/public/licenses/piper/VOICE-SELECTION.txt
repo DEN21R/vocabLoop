@@ -1,0 +1,48 @@
+Vocabloop temporary Piper voice selection - attribution and dataset terms
+
+Weights and model configurations are downloaded on demand and are not modified.
+Original MODEL_CARD files are supplied beside this notice. Their precise URLs
+and SHA-256 hashes are recorded in provenance.json. The voice repository declares
+MIT; that declaration does not replace the individual dataset licenses below.
+Source: https://huggingface.co/diffusionstudio/piper-voices
+
+en_US-ljspeech-medium: LJ Speech, female, US English. Dataset public domain.
+Source: https://keithito.com/LJ-Speech-Dataset/
+en_US-joe-medium: Joe, male, US English. Dataset CC0.
+Source: https://github.com/OHF-Voice/voice-datasets
+de_DE-thorsten-medium: Thorsten, male, German. Dataset CC0.
+Source: https://github.com/thorstenMueller/Thorsten-Voice
+ru_RU-denis-medium / ru_RU-dmitri-medium: Denis / Dmitri, male, Russian.
+Datasets CC0. Source: https://github.com/OHF-Voice/voice-datasets
+uk_UA-ukrainian_tts-medium: Lada (speaker 0), Mykyta (1), Tetiana (2).
+Dataset CC0. Source: https://github.com/OHF-Voice/voice-datasets
+The three Ukrainian speakers share one unchanged model and cached download.
+Full CC0 terms: CC0-1.0.txt.
+
+en_GB-alba-medium: Alba, female, Scottish-accented English.
+Dataset: Alba speech corpus, Valentini-Botinhao, Cassia; Yamagishi, Junichi
+(2019), University of Edinburgh. https://doi.org/10.7488/ds/2506
+Source: https://datashare.ed.ac.uk/handle/10283/3270
+Dataset license: Creative Commons Attribution 4.0 International (CC BY 4.0).
+Full terms: CC-BY-4.0.txt; https://creativecommons.org/licenses/by/4.0/
+The dataset's license notice additionally recalls that moral/personality
+rights of the voice talent are not licensed; derogatory use is prohibited.
+Original notice: Alba-dataset-license.txt. No endorsement is implied.
+
+en_GB-northern_english_male-medium: male, Northern England English.
+Dataset: Crowdsourced high-quality UK and Ireland English Dialect speech data
+set (SLR83), northern_english_male subset. Copyright 2018, 2019 Google, Inc.
+Source and attribution: https://www.openslr.org/83/
+Dataset license: Creative Commons Attribution-ShareAlike 4.0 International.
+Full terms: CC-BY-SA-4.0.txt; https://creativecommons.org/licenses/by-sa/4.0/
+Preserve attribution and the applicable ShareAlike terms when distributing
+adapted licensed material. No endorsement is implied. Weights are unchanged.
+Requested scholarly citation: Demirsahin, Isin; Kjartansson, Oddur; Gutkin,
+Alexander; Rivera, Clara (2020), Open-source Multi-speaker Corpora of the
+English Accents in the British Isles, LREC 2020, pp. 6532-6541.
+https://aclanthology.org/2020.lrec-1.804/
+
+The original cards describe Joe, Alba, Northern English, Thorsten, Denis and
+Dmitri as finetuned from Lessac medium. The Ukrainian model is trained from
+scratch. No weights, phoneme tables or upstream runtime binaries are changed.
+Labels describe the source voices; listen on target devices to assess quality.

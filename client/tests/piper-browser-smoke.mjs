@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { PIPER_VOICES } from '../src/features/play-listening-session/model/piperProbe.ts'
 
 const client = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const executable = process.env.PIPER_CHROME_PATH ?? [
@@ -20,8 +21,12 @@ const worker = readdirSync(resolve(client, 'dist/assets')).find((file) => file.s
 assert(worker, 'Build the client first')
 const temp = resolve(client, 'node_modules/.tmp')
 mkdirSync(temp, { recursive: true })
-const profile = mkdtempSync(resolve(temp, 'piper-browser-'))
-const origin = 'http://127.0.0.1:4173'
+const profileName = process.env.PIPER_TEST_PROFILE
+assert(!profileName || /^[a-zA-Z0-9_-]+$/.test(profileName), 'Use a simple temporary profile name')
+const profile = profileName ? resolve(temp, profileName) : mkdtempSync(resolve(temp, 'piper-browser-'))
+mkdirSync(profile, { recursive: true })
+const testUI = process.env.PIPER_TEST_UI === '1'
+const origin = testUI ? 'http://127.0.0.1:5173' : 'http://127.0.0.1:4173'
 const simulateOldSafari = process.env.PIPER_SIMULATE_SAFARI === '1'
 const chrome = spawn(executable, ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
   '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] })
@@ -68,22 +73,28 @@ try {
   }
   await call('Runtime.enable')
   await call('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: false, flatten: true })
-  await call('Page.navigate', { url: origin })
+  await call('Page.navigate', { url: testUI ? `${origin}/tests/piper-probe.html` : origin })
   for (let i = 0; i < 200; i++) {
     if (await evaluate('location.origin + " " + document.readyState') === `${origin} complete`) break
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
   assert.equal(await evaluate('location.origin'), origin)
+  if (testUI) {
+    const { runPiperUiChecks } = await import('./piper-ui-checks.mjs')
+    await runPiperUiChecks(evaluate, call)
+  } else {
   console.log('Browser:', await (await fetch(`http://127.0.0.1:${port}/json/version`)).json().then((value) => value.Browser))
   if (simulateOldSafari) await evaluate(`(async()=>{
     const root = await navigator.storage.getDirectory();
     const dir = await root.getDirectoryHandle('piper', {create:true});
     await dir.getFileHandle('en_US-ljspeech-medium.onnx.json', {create:true});
   })()`)
-  const cases = simulateOldSafari ? [['en', 'hello'], ['en', 'hello'], ['de', 'Hallo'], ['de', 'Hallo'], ['ru', 'привет'], ['ru', 'привет'], ['uk', 'привіт'], ['uk', 'їжак']] : [['en', 'hello'], ['de', 'Hallo'], ['ru', 'привет'], ['uk', 'привіт'],
+  const allVoices = process.env.PIPER_TEST_ALL_VOICES === '1'
+  const phrases = { en: 'Good morning, how are you?', de: 'Heute möchte ich fünf Bücher lesen.', ru: 'Съешь ещё этих мягких булок.', uk: 'Привіт, їжак і ґанок.' }
+  const cases = allVoices ? Object.entries(PIPER_VOICES).flatMap(([language, entry]) => entry.voices.flatMap((voice) => [[language, entry.word, voice.id], [language, phrases[language], voice.id]])) : simulateOldSafari ? [['en', 'hello'], ['en', 'hello'], ['de', 'Hallo'], ['de', 'Hallo'], ['ru', 'привет'], ['ru', 'привет'], ['uk', 'привіт'], ['uk', 'їжак']] : [['en', 'hello'], ['de', 'Hallo'], ['ru', 'привет'], ['uk', 'привіт'],
     ['uk', 'їжак'], ['uk', 'ґанок'], ['uk', 'єдність'], ['uk', 'Україна'], ['uk', 'з’їсти'], ['uk', 'приві́т'], ['en', 'hello']]
   const results = []
-  for (const [language, text] of cases) {
+  for (const [language, text, voice] of cases) {
     const started = Date.now()
     const result = await evaluate(`new Promise(resolve => {
       const simulateOldSafari = ${simulateOldSafari};
@@ -96,7 +107,7 @@ try {
       const timer = setTimeout(() => done({error:'timeout'}), 180000);
       worker.onerror = event => done({error:event.message});
       worker.onmessage = async ({data}) => {
-        if(data.type === 'test-ready') { worker.postMessage(${JSON.stringify({ language, text })}); return; }
+        if(data.type === 'test-ready') { worker.postMessage(${JSON.stringify({ language, text, voice })}); return; }
         if (data.type === 'error') return done({error:data.message});
         if (data.type === 'status') { statuses.push(data.message); return; }
         try {
@@ -107,20 +118,23 @@ try {
           done({bytes:data.audio.size, rate, duration:decoded.duration, peak, statuses});
         } catch(error) { done({error:String(error)}); }
       };
-      if(!simulateOldSafari)worker.postMessage(${JSON.stringify({ language, text })});
+      if(!simulateOldSafari)worker.postMessage(${JSON.stringify({ language, text, voice })});
     })`)
+    if (result.error && allVoices) { results.push({ language, text, voice, ...result }); console.log(JSON.stringify({ language, text, voice, ...result })); continue }
     assert(!result.error, `${language}/${text}: ${result.error}`)
     assert(result.bytes > 44 && result.duration > 0.05 && result.peak > 0 && Number.isFinite(result.peak), JSON.stringify(result))
-    results.push({ language, text, ...result })
-    console.log(JSON.stringify({ language, text, ms: Date.now() - started, ...result, statuses: [result.statuses[0], result.statuses.at(-1)] }))
+    results.push({ language, text, voice, ...result })
+    console.log(JSON.stringify({ language, text, voice, ms: Date.now() - started, ...result, statuses: [result.statuses[0], result.statuses.at(-1)] }))
   }
-  assert(results.find((result) => result.text === 'їжак').statuses.some((status) => status.includes('из кэша')), 'UK model must be reused from CacheStorage')
+  assert(!results.some((result) => result.error), JSON.stringify(results.filter((result) => result.error)))
+  assert(results.filter((result) => result.language === 'uk').at(-1).statuses.some((status) => status.includes('из кэша')), 'UK model must be reused from CacheStorage')
   assert(!results.filter((result) => result.language === 'en').at(-1).statuses.some((status) => status.includes('загружено')), 'EN model must be reused from OPFS')
   if (simulateOldSafari) {
     assert(results[0].statuses.some((status) => status.includes('повреждённый кэш')), 'Repair old empty OPFS config')
     assert(!results[1].statuses.some((status) => status.includes('Совместимая запись')), 'Reuse repaired model on the second call')
   }
   console.log(simulateOldSafari ? 'PASS: simulated old Safari OPFS, corrupt config repair, repeated EN/DE/RU/UK.' : 'PASS: all four languages, Ukrainian letters/apostrophe/stress, model cache reuse.')
+  }
 } finally {
   ws?.close()
   chrome.kill()

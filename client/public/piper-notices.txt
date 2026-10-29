@@ -52,12 +52,17 @@ MODEL_CARD states finetuning from Lessac medium.
 https://huggingface.co/diffusionstudio/piper-voices/blob/main/ru/ru_RU/denis/medium/MODEL_CARD
 https://github.com/OHF-Voice/voice-datasets
 
-UK: uk_UA-ukrainian_tts-medium, speaker lada (0).
+UK: uk_UA-ukrainian_tts-medium, speakers lada (0), mykyta (1), tetiana (2).
 Dataset: Ukrainian voice-datasets, CC0. Trained from scratch; text phonemes.
 https://huggingface.co/diffusionstudio/piper-voices/blob/840e38a7e26d813bd6221b78cfbaefa3585b3f71/uk/uk_UA/ukrainian_tts/medium/MODEL_CARD
 https://github.com/OHF-Voice/voice-datasets
 
 No NonCommercial voices (e.g. ruslan/hfc_female) are selected.
+Additional voices: en_US-joe-medium (CC0 dataset), en_GB-alba-medium
+(CC BY 4.0 dataset), en_GB-northern_english_male-medium (CC BY-SA 4.0
+dataset, Copyright 2018, 2019 Google, Inc.), ru_RU-dmitri-medium (CC0 dataset).
+Original model cards, attribution, dataset links and full Creative Commons
+license texts are supplied in licenses/piper/VOICE-SELECTION.txt and index.html.
 Models are downloaded only on request. EN/DE/RU use the wrapper's OPFS cache;
 UK uses CacheStorage with a pinned URL. Storage restrictions/eviction may
 cause another download. WASM is fetched from the upstream library's CDNs.

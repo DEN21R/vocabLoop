@@ -81,6 +81,10 @@ The upstream WASM, eSpeak source and voice weights are unmodified.
 The integration also repairs empty/interrupted OPFS cache files and uses
 Worker sync OPFS access on Safari versions without createWritable().
 The upstream phonemizer and inference implementation are not patched.
+The temporary UI allows per-language voice selection and stores preferences
+locally. Only the selected model is downloaded. Ukrainian lada/mykyta/tetiana
+share unchanged weights/config and select speaker IDs 0/1/2 respectively.
+Additional voice attribution and dataset terms: VOICE-SELECTION.txt.
 
 Rights / warranty
 -----------------

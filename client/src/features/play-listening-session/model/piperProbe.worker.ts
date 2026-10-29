@@ -6,13 +6,14 @@ import { piperError, validatePiperRequest, type PiperRequest, type PiperReply, t
 const reply = (message: PiperReply) => self.postMessage(message)
 let stage: PiperStage = 'validate'
 let language: PiperRequest['language'] | undefined
+let voice: string | undefined
 const status = (message: string, nextStage?: PiperStage) => {
   if (nextStage) stage = nextStage
   reply({ type: 'status', message })
 }
 const failure = (error: unknown) => {
   console.error('[Piper probe]', error)
-  reply({ type: 'error', message: piperError(error, { stage, language }) })
+  reply({ type: 'error', message: piperError(error, { stage, language, voice }) })
 }
 
 // Keep isolation: upstream predict() neither reuses nor releases its ONNX session.
@@ -21,11 +22,12 @@ self.onmessage = async ({ data }: MessageEvent<PiperRequest>) => {
   try {
     const request = validatePiperRequest(data)
     language = data.language
-    if (data.language !== 'uk') await preparePiperOpfs(request.voiceId as Exclude<typeof request.voiceId, 'uk_UA-ukrainian_tts-medium'>, status)
+    voice = request.choiceId
+    if (data.language !== 'uk') await preparePiperOpfs(request.voiceId, status)
     stage = 'synthesis'
     let lastMb = -1
     const audio = data.language === 'uk'
-      ? await predictUkrainian(request.text, status)
+      ? await predictUkrainian(request.text, status, request.speaker)
       : await predict(request, ({ loaded }) => {
         const mb = Math.floor(loaded / 1048576)
         if (mb !== lastMb) { lastMb = mb; status(`Модель: загружено ${mb} МБ. Затем синтез речи…`) }

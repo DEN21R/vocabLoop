@@ -62,6 +62,48 @@
       "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/uk/uk_UA/ukrainian_tts/medium/MODEL_CARD",
       "sha256": "cb77fd7742b78f3bdfd2457c7ef712cfb153193af3b21325821df4ca8d8030de",
       "bytes": 266
+    },
+    {
+      "file": "en_US-joe-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/en/en_US/joe/medium/MODEL_CARD",
+      "sha256": "d38223ba9381592ee7aeee49da1b61047121db1ad1761973ce0b88ff3e14041b",
+      "bytes": 280
+    },
+    {
+      "file": "en_GB-alba-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/en/en_GB/alba/medium/MODEL_CARD",
+      "sha256": "fa166b1779404c470b0b6b4ba0238bc4a35bf89d2cd130c6788f697188b737d6",
+      "bytes": 324
+    },
+    {
+      "file": "en_GB-northern_english_male-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/en/en_GB/northern_english_male/medium/MODEL_CARD",
+      "sha256": "75661c3a50c0ba82b32b3a438e54103d8dfe5bbe8fbb864ac687a040e79948bb",
+      "bytes": 305
+    },
+    {
+      "file": "ru_RU-dmitri-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/ru/ru_RU/dmitri/medium/MODEL_CARD",
+      "sha256": "56440cd6a7f0789669f53989b1c0ea244e335c2533fdb1fa8bac60e57205908e",
+      "bytes": 276
+    },
+    {
+      "file": "CC-BY-4.0.txt",
+      "url": "https://creativecommons.org/licenses/by/4.0/legalcode.txt",
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+      "bytes": 18657
+    },
+    {
+      "file": "CC-BY-SA-4.0.txt",
+      "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.txt",
+      "sha256": "28a9529c7d0bb4dc51f4bf5c116a3d16ef247a052f7591466768ddf563fd1cf5",
+      "bytes": 20138
+    },
+    {
+      "file": "Alba-dataset-license.txt",
+      "url": "https://datashare.ed.ac.uk/server/api/core/bitstreams/ca0b398a-635c-48cd-b85a-beb6f8401e0d/content",
+      "sha256": "f09b25492b8c18da8b460eceab54a6df72871a7d552aef714bc3ec6fa7c010aa",
+      "bytes": 820
     }
   ],
   "binaries": [

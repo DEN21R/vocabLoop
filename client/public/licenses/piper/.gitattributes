@@ -1,2 +1,6 @@
 # Preserve the downloaded upstream license/build/model-card bytes verbatim.
 *.txt -text
+# Preserve original upstream license bytes, including their trailing whitespace.
+Alba-dataset-license.txt whitespace=-blank-at-eol,-blank-at-eof
+CC-BY-4.0.txt whitespace=-blank-at-eol,-blank-at-eof
+CC-BY-SA-4.0.txt whitespace=-blank-at-eol,-blank-at-eof

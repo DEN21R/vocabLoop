@@ -29,8 +29,9 @@ interface UkrainianConfig extends TextVoiceConfig {
   speaker_id_map: Record<string, number>
 }
 
-export async function predictUkrainian(text: string, status: (text: string, stage?: PiperStage) => void) {
+export async function predictUkrainian(text: string, status: (text: string, stage?: PiperStage) => void, speaker = 'lada') {
   const config: UkrainianConfig = await (await modelFile(`${BASE}.json`, status)).json()
+  if (!Object.hasOwn(config.speaker_id_map, speaker)) throw new Error('Выберите поддерживаемого диктора украинской модели Piper.')
   const ids = textPhonemeIds(text, config)
   const model = await (await modelFile(BASE, status)).arrayBuffer()
   const ort = await import('onnxruntime-web')
@@ -44,7 +45,7 @@ export async function predictUkrainian(text: string, status: (text: string, stag
       input: new ort.Tensor('int64', BigInt64Array.from(ids, BigInt), [1, ids.length]),
       input_lengths: new ort.Tensor('int64', BigInt64Array.of(BigInt(ids.length)), [1]),
       scales: new ort.Tensor('float32', [config.inference.noise_scale, config.inference.length_scale, config.inference.noise_w]),
-      sid: new ort.Tensor('int64', BigInt64Array.of(BigInt(config.speaker_id_map.lada)), [1]),
+      sid: new ort.Tensor('int64', BigInt64Array.of(BigInt(config.speaker_id_map[speaker])), [1]),
     }
     const { output } = await session.run(feeds)
     return pcmWav(output.data as Float32Array, config.audio.sample_rate)

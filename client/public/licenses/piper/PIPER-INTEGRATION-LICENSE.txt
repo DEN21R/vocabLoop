@@ -13,6 +13,8 @@ client/src/features/play-listening-session/ui/PiperAudioProbe.tsx
 client/tests/piper-text.test.cjs
 client/tests/piper-opfs.test.cjs
 client/tests/piper-browser-smoke.mjs
+client/tests/piper-ui-checks.mjs
+client/tests/piper-probe.html
 
 This software is provided WITHOUT ANY WARRANTY; without even the implied
 warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

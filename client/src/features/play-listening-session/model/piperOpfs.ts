@@ -1,12 +1,16 @@
-import { HF_BASE, PATH_MAP } from '@diffusionstudio/vits-web'
+import { HF_BASE, PATH_MAP, type VoiceId } from '@diffusionstudio/vits-web'
 import type { PiperStage } from './piperProbe'
 
 // Sizes of the unchanged, reviewed models used by the probe. A cancelled write
 // must never be accepted as a complete model on the next generation.
 const MODEL_BYTES = {
   'en_US-ljspeech-medium': 63531379,
+  'en_US-joe-medium': 63201294,
+  'en_GB-alba-medium': 63201294,
+  'en_GB-northern_english_male-medium': 63201294,
   'de_DE-thorsten-medium': 63201294,
   'ru_RU-denis-medium': 63201294,
+  'ru_RU-dmitri-medium': 63201294,
 } as const
 
 interface SyncAccess {
@@ -48,7 +52,9 @@ export async function writePiperFile(file: WorkerFile, response: Response, expec
   }
 }
 
-export async function preparePiperOpfs(voiceId: keyof typeof MODEL_BYTES, status: Status) {
+export async function preparePiperOpfs(voiceId: VoiceId, status: Status) {
+  if (!Object.hasOwn(MODEL_BYTES, voiceId)) throw new Error('Выберите проверенную модель Piper.')
+  const expectedBytes = MODEL_BYTES[voiceId as keyof typeof MODEL_BYTES]
   status('Проверка кэша выбранной модели…', 'cache')
   let dir: FileSystemDirectoryHandle
   try {
@@ -72,7 +78,7 @@ export async function preparePiperOpfs(voiceId: keyof typeof MODEL_BYTES, status
           const config = JSON.parse(await file.text())
           valid = !!config.audio?.sample_rate && !!config.phoneme_id_map && !!config.espeak?.voice
         } catch { /* An empty, HTML or interrupted JSON response is not a config. */ }
-      } else valid = file.size === MODEL_BYTES[voiceId]
+      } else valid = file.size === expectedBytes
     }
     if (valid) continue
     if (file) {
@@ -88,7 +94,7 @@ export async function preparePiperOpfs(voiceId: keyof typeof MODEL_BYTES, status
         continue
       }
       status(`Совместимая запись кэша Safari: ${name}. Загрузка…`, suffix ? 'config' : 'model')
-      await writePiperFile(handle, await fetch(url), suffix ? undefined : MODEL_BYTES[voiceId])
+      await writePiperFile(handle, await fetch(url), suffix ? undefined : expectedBytes)
       if (suffix) JSON.parse(await (await handle.getFile()).text())
     } catch (error) {
       // A failed write must not poison subsequent calls. Never touch other data.
