@@ -5,7 +5,8 @@ const { test } = require('node:test')
 const ts = require('typescript')
 
 function load(file, imports = {}, globals = {}) {
-  const source = readFileSync(resolve(__dirname, '../src/features/play-listening-session/model', file), 'utf8').replaceAll('import.meta.url', "'https://test.local/piperAudio.js'")
+  const folder = file.startsWith('piper') ? '../src/shared/lib/tts' : '../src/features/play-listening-session/model'
+  const source = readFileSync(resolve(__dirname, folder, file), 'utf8').replaceAll('import.meta.url', "'https://test.local/piperAudio.js'")
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2023 } }).outputText
   const module = { exports: {} }
   new Function('require', 'module', 'exports', ...Object.keys(globals), code)((name) => imports[name], module, module.exports, ...Object.values(globals))
@@ -23,8 +24,8 @@ test('track preserves order, recording priority, pauses and one native loop time
   const requests = []
   const recordings = []
   const { buildSessionTrack, sessionPosition } = load('sessionTrack.ts', {
-    './piper': piper, './piperText': text,
-    './piperAudio': { getPiperAudio: async (request) => { requests.push(request); return new Blob(['clip']) } },
+    '../../../shared/lib/tts/piper': piper, '../../../shared/lib/tts/piperText': text,
+    '../../../shared/lib/tts/piperAudio': { getPiperAudio: async (request) => { requests.push(request); return new Blob(['clip']) } },
     '../../../entities/word': { getRecording: async (id) => { recordings.push(id); return new Blob(['recording']) } },
   }, { OfflineAudioContext: class {
     async decodeAudioData() { return { length: 22050, numberOfChannels: 2, getChannelData: () => new Float32Array(22050).fill(0.25) } }
@@ -161,25 +162,68 @@ test('stopping or unmounting during preparation aborts and ignores late results'
   assert.equal(env.audio.src, '')
 })
 
-// Shared playback is still used by individual dictionary words.
-test('late play rejection after stop cannot clear the next recording', async () => {
-  const urls = new Set()
-  let nextUrl = 0, rejectFirst
-  const { playAudio } = load('../../../shared/lib/audio/playAudio.ts', {}, {
-    URL: {
-      createObjectURL() { const url = `blob:${++nextUrl}`; urls.add(url); return url },
-      revokeObjectURL: (url) => urls.delete(url),
+function wordEnvironment(generate) {
+  const requests = [], recordings = [], played = [], states = [], cleanups = []
+  const context = {
+    state: 'suspended', destination: {},
+    resume() { this.state = 'running'; return Promise.resolve() },
+    close() { this.state = 'closed'; return Promise.resolve() },
+    decodeAudioData: async () => ({}),
+    createBufferSource() {
+      return { connect() {}, disconnect() {}, start() { played.push(this.buffer); queueMicrotask(() => this.onended?.()) } }
     },
-  })
-  const element = { pause() {}, removeAttribute() {}, load() {}, play: () => new Promise((_, reject) => { rejectFirst = reject }) }
-  const first = playAudio(new Blob(['first']), element)
-  first.stop()
-  element.play = () => Promise.resolve()
-  const second = playAudio(new Blob(['second']), element)
-  rejectFirst(new DOMException('Interrupted', 'AbortError'))
-  await first.finished
-  assert.equal(urls.size, 1)
-  second.stop()
-  await second.finished
-  assert.equal(urls.size, 0)
+  }
+  const { useWordPlayback: createPlayer } = load('../../play-word/model/useWordPlayback.ts', {
+    react: {
+      useState: (value) => [value, (next) => states.push(next)],
+      useRef: (current) => ({ current }), useEffect: (fn) => cleanups.push(fn()),
+    },
+    '../../../shared/lib/tts/piper': piper,
+    '../../../shared/lib/tts/piperAudio': { getPiperAudio: async (request, signal) => {
+      requests.push(request)
+      return generate ? generate(request, signal) : new Blob(['clip'])
+    } },
+    '../../../entities/word': { getRecording: async (id) => { recordings.push(id); return new Blob(['recording']) } },
+  }, { AudioContext: function () { return context } })
+  return { player: createPlayer(voices), requests, recordings, played, states, context, dispose: () => cleanups.forEach((fn) => fn()) }
+}
+
+test('word preview uses the same Piper choices for original and translation without changing text', async () => {
+  const env = wordEnvironment()
+  const word = { ...words[0] }
+  const before = JSON.stringify(word)
+  const pending = env.player.playWord(word)
+  assert.equal(env.context.state, 'running', 'audio is authorized directly from the click')
+  await pending
+  assert.deepEqual(env.requests.map((r) => [r.text, r.language, r.voice]), [['one', 'en', voices.en], ['один', 'ru', voices.ru]])
+  assert.equal(env.played.length, 2)
+  assert.equal(env.context.state, 'closed')
+  assert.equal(JSON.stringify(word), before)
+  env.dispose()
+})
+
+test('word preview preserves the explicitly selected user recording instead of generating its translation', async () => {
+  const env = wordEnvironment()
+  await env.player.playWord(words[0], 'recording')
+  assert.deepEqual(env.requests.map((r) => r.text), ['one'])
+  assert.deepEqual(env.recordings, ['1'])
+  assert.equal(env.played.length, 2)
+  env.dispose()
+})
+
+test('stop cancels word generation and prevents translation and parallel previews', async () => {
+  let complete, signal
+  const env = wordEnvironment((request, abortSignal) => { signal = abortSignal; return new Promise((resolve) => { complete = resolve }) })
+  const pending = env.player.playWord(words[0])
+  await Promise.resolve()
+  await env.player.playWord(words[1])
+  assert.equal(env.requests.length, 1)
+  env.player.stop()
+  assert.equal(signal.aborted, true)
+  complete(new Blob(['late']))
+  await pending
+  assert.equal(env.played.length, 0)
+  assert.equal(env.requests.length, 1)
+  assert.equal(env.context.state, 'closed')
+  env.dispose()
 })

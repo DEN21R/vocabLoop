@@ -5,7 +5,7 @@ const { test } = require('node:test')
 const ts = require('typescript')
 
 function load(globals = {}) {
-  const source = readFileSync(resolve(__dirname, '../src/features/play-listening-session/model/piperOpfs.ts'), 'utf8')
+  const source = readFileSync(resolve(__dirname, '../src/shared/lib/tts/piperOpfs.ts'), 'utf8')
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2023 } }).outputText
   const module = { exports: {} }
   new Function('require', 'module', 'exports', ...Object.keys(globals), code)(

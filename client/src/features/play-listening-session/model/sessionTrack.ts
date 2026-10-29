@@ -1,7 +1,7 @@
 import { getRecording, type IWord } from '../../../entities/word'
-import { getPiperAudio } from './piperAudio'
-import { piperLanguage, type PiperSelections } from './piper'
-import { pcmWav, wavHeader } from './piperText'
+import { getPiperAudio } from '../../../shared/lib/tts/piperAudio'
+import { piperLanguage, type PiperSelections } from '../../../shared/lib/tts/piper'
+import { pcmWav, wavHeader } from '../../../shared/lib/tts/piperText'
 
 export interface SessionCue { time: number; index: number; phase: 'original' | 'translation' | 'waiting' }
 export interface SessionTrack { audio: Blob; cues: SessionCue[] }

@@ -1,15 +1,10 @@
 import { Box, Typography, Button, Menu, MenuItem } from '@mui/material'
-import { useEffect, useState } from 'react'
-import { getAvailableVoices, getVoicesByLanguage } from '../../../shared/lib/tts/speech'
+import { useState } from 'react'
+import { PIPER_VOICES, type PiperLanguage, type PiperSelections } from '../../../shared/lib/tts/piper'
 
 type VoiceSettingsProps = {
-  selectedVoices: {
-    en: string
-    ru: string
-    de: string
-    uk: string
-  }
-  onVoiceChange: (language: 'en' | 'ru' | 'de' | 'uk', voiceURI: string) => void
+  selectedVoices: PiperSelections
+  onVoiceChange: (language: PiperLanguage, voiceId: string) => void
 }
 
 const languages = [
@@ -23,18 +18,12 @@ export function VoiceSettings({
   selectedVoices,
   onVoiceChange,
 }: VoiceSettingsProps) {
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
-  const [voicesLoading, setVoicesLoading] = useState(() => 'speechSynthesis' in window && getAvailableVoices().length === 0)
   const [selectedLanguage, setSelectedLanguage] = useState<
     'en' | 'ru' | 'de' | 'uk' | null
   >(null)
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
-  const menuOpen = anchorEl !== null
 
   function openMenu(button: HTMLElement) {
-    const available = getAvailableVoices()
-    setVoices(available)
-    setVoicesLoading('speechSynthesis' in window && available.length === 0)
     setAnchorEl(button)
     setSelectedLanguage(null)
   }
@@ -44,44 +33,14 @@ export function VoiceSettings({
     setSelectedLanguage(null)
   }
 
-  function selectVoice(voiceURI: string) {
+  function selectVoice(voiceId: string) {
     if (selectedLanguage === null) return
 
-    onVoiceChange(selectedLanguage, voiceURI)
+    onVoiceChange(selectedLanguage, voiceId)
     closeMenu()
   }
 
-  useEffect(() => {
-    if (!('speechSynthesis' in window)) return
-
-    const updateVoices = () => {
-      const available = getAvailableVoices()
-      setVoices(available)
-      if (available.length > 0) setVoicesLoading(false)
-    }
-
-    window.speechSynthesis.addEventListener('voiceschanged', updateVoices)
-    // Android may initialize TTS without delivering voiceschanged reliably.
-    const poll = setInterval(updateVoices, 500)
-    const timeout = setTimeout(() => {
-      clearInterval(poll)
-      updateVoices()
-      setVoicesLoading(false)
-    }, 10000)
-    updateVoices()
-
-    return () => {
-      window.speechSynthesis.removeEventListener('voiceschanged', updateVoices)
-      clearInterval(poll)
-      clearTimeout(timeout)
-    }
-  }, [menuOpen])
-
-  let filteredVoices: SpeechSynthesisVoice[] = []
-
-  if (selectedLanguage !== null) {
-    filteredVoices = getVoicesByLanguage(voices, selectedLanguage)
-  }
+  const filteredVoices = selectedLanguage === null ? [] : PIPER_VOICES[selectedLanguage].voices
 
   return (
     <Box
@@ -107,14 +66,6 @@ export function VoiceSettings({
       </Button>
 
       <Menu anchorEl={anchorEl} open={anchorEl !== null} onClose={closeMenu}>
-        {voices.length === 0 && (
-          <MenuItem disabled>
-            {voicesLoading ? 'Голоса загружаются…' : 'Браузер не предоставил голоса. Проверьте системный TTS.'}
-          </MenuItem>
-        )}
-        {selectedLanguage !== null && voices.length > 0 && filteredVoices.length === 0 && (
-          <MenuItem disabled>Нет голосов выбранного языка</MenuItem>
-        )}
         {selectedLanguage === null &&
           languages.map((language) => (
             <MenuItem
@@ -126,15 +77,6 @@ export function VoiceSettings({
           ))}
 
         {selectedLanguage !== null && (
-          <MenuItem
-            onClick={() => selectVoice('')}
-            selected={selectedVoices[selectedLanguage] === ''}
-          >
-            Автоматически
-          </MenuItem>
-        )}
-
-        {selectedLanguage !== null && (
           <MenuItem onClick={() => setSelectedLanguage(null)}>
             ← Назад к языкам
           </MenuItem>
@@ -143,11 +85,11 @@ export function VoiceSettings({
         {selectedLanguage !== null &&
           filteredVoices.map((voice) => (
             <MenuItem
-              key={voice.voiceURI}
-              onClick={() => selectVoice(voice.voiceURI)}
-              selected={selectedVoices[selectedLanguage] === voice.voiceURI}
+              key={voice.id}
+              onClick={() => selectVoice(voice.id)}
+              selected={selectedVoices[selectedLanguage] === voice.id}
             >
-              {voice.name}
+              {voice.label}
             </MenuItem>
           ))}
       </Menu>

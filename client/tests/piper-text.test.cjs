@@ -5,7 +5,7 @@ const { test } = require('node:test')
 const ts = require('typescript')
 
 function load(file, imports = {}, globals = {}) {
-  const code = ts.transpileModule(readFileSync(resolve(__dirname, '../src/features/play-listening-session/model', file), 'utf8'), {
+  const code = ts.transpileModule(readFileSync(resolve(__dirname, '../src/shared/lib/tts', file), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2023 },
   }).outputText
   const module = { exports: {} }

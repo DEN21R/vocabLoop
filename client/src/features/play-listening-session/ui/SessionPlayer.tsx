@@ -1,25 +1,14 @@
 import { useState } from 'react'
-import { Box, Button, MenuItem, TextField, Typography } from '@mui/material'
+import { Box, Button, Typography } from '@mui/material'
 import type { IWord } from '../../../entities/word'
-import { PIPER_VOICES, loadPiperSelections, savePiperSelections, type PiperSelections } from '../model/piper'
+import { loadPiperSelections, type PiperSelections } from '../../../shared/lib/tts/piper'
 import { useSessionPlayer } from '../model/useSessionPlayer'
 
 export default function SessionPlayer({ words, intervalSeconds }: { words: IWord[]; intervalSeconds: number }) {
-  const [voices, setVoices] = useState(loadPiperSelections)
+  const [voices] = useState(loadPiperSelections)
   return (
     <Box sx={{ mb: 3 }}>
       <Typography>Прослушивание по кругу. Интервал: {intervalSeconds} сек.</Typography>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 2 }}>
-        {Object.entries(PIPER_VOICES).map(([language, entry]) => (
-          <TextField key={language} select label={`Голос · ${entry.name}`} value={voices[language as keyof PiperSelections]} sx={{ minWidth: 220 }}
-            onChange={(event) => {
-              const next = { ...voices, [language]: event.target.value }
-              savePiperSelections(next); setVoices(next)
-            }}>
-            {entry.voices.map((voice) => <MenuItem key={voice.id} value={voice.id}>{voice.label}</MenuItem>)}
-          </TextField>
-        ))}
-      </Box>
       <Playback key={JSON.stringify([words.map((word) => [word._id, word.original, word.translation, word.sourceLanguage, word.targetLanguage, word.hasRecording, word.updatedAt]), intervalSeconds, voices])}
         words={words} intervalSeconds={intervalSeconds} voices={voices} />
       <Typography variant="body2">

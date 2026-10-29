@@ -21,29 +21,9 @@ import {
 } from '../../../features/play-word'
 import { RecordWordDialog } from '../../../features/record-word'
 import { CreateSessionForm } from '../../../features/create-listening-session'
+import { loadPiperSelections, savePiperSelections, type PiperLanguage } from '../../../shared/lib/tts/piper'
 
 type Status = 'loading' | 'success' | 'error'
-
-type SelectedVoices = {
-  en: string
-  ru: string
-  de: string
-  uk: string
-}
-
-function loadSelectedVoices(): SelectedVoices {
-  const savedVoices = localStorage.getItem('selectedVoices')
-  if (savedVoices === null) {
-    return {
-      en: '',
-      ru: '',
-      de: '',
-      uk: '',
-    }
-  }
-  const parsedVoices = JSON.parse(savedVoices)
-  return parsedVoices
-}
 
 function loadTranslationSources() {
   const saved = localStorage.getItem('translationSources')
@@ -60,7 +40,7 @@ function HomePage() {
   const [status, setStatus] = useState<Status>('loading')
   const [words, setWords] = useState<IWord[]>([])
   const [selectedWordIds, setSelectedWordIds] = useState<string[]>([])
-  const [selectedVoices, setSelectedVoices] = useState(loadSelectedVoices)
+  const [selectedVoices, setSelectedVoices] = useState(loadPiperSelections)
   const [recordingWord, setRecordingWord] = useState<IWord | null>(null)
   const [translationSources, setTranslationSources] = useState<
     Record<string, 'tts' | 'recording'>
@@ -75,20 +55,14 @@ function HomePage() {
   } = useWordPlayback(selectedVoices)
 
   function handleVoiceChange(
-    language: 'en' | 'ru' | 'de' | 'uk',
-    voiceURI: string,
+    language: PiperLanguage,
+    voiceId: string,
   ) {
-    setSelectedVoices((previousVoices) => {
-      const updatedVoices = { ...previousVoices }
-      updatedVoices[language] = voiceURI
-
-      return updatedVoices
-    })
+    stop()
+    const updatedVoices = { ...selectedVoices, [language]: voiceId }
+    savePiperSelections(updatedVoices)
+    setSelectedVoices(updatedVoices)
   }
-  useEffect(() => {
-    const savedVoices = JSON.stringify(selectedVoices)
-    localStorage.setItem('selectedVoices', savedVoices)
-  }, [selectedVoices])
 
   const handleClickOpen = () => {
     setOpen(true)
@@ -248,7 +222,7 @@ function HomePage() {
                       )
                     }}
                   >
-                    <MenuItem value="tts">Браузерный голос</MenuItem>
+                    <MenuItem value="tts">Голос Piper</MenuItem>
                     <MenuItem value="recording">Моя запись</MenuItem>
                   </Select>
                 )}

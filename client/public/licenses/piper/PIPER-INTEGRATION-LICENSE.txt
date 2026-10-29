@@ -4,14 +4,16 @@ Copyright (C) 2026 Vocabloop contributors
 The following new integration files are licensed under the GNU General Public
 License version 3. You may copy, modify and redistribute them under that license.
 
-client/src/features/play-listening-session/model/piper.ts
-client/src/features/play-listening-session/model/piper.worker.ts
-client/src/features/play-listening-session/model/piperOpfs.ts
-client/src/features/play-listening-session/model/piperText.ts
-client/src/features/play-listening-session/model/piperUkrainian.ts
+client/src/shared/lib/tts/piper.ts
+client/src/shared/lib/tts/piper.worker.ts
+client/src/shared/lib/tts/piperOpfs.ts
+client/src/shared/lib/tts/piperText.ts
+client/src/shared/lib/tts/piperUkrainian.ts
 client/src/features/play-listening-session/ui/SessionPlayer.tsx
+client/src/features/play-word/model/useWordPlayback.ts
+client/src/features/play-word/ui/VoiceSettings.tsx
 client/src/features/play-listening-session/model/useSessionPlayer.ts
-client/src/features/play-listening-session/model/piperAudio.ts
+client/src/shared/lib/tts/piperAudio.ts
 client/src/features/play-listening-session/model/sessionTrack.ts
 client/tests/listening-audio.test.cjs
 client/tests/piper-text.test.cjs

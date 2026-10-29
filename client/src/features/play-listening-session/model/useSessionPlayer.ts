@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { IWord } from '../../../entities/word'
-import type { PiperSelections } from './piper'
+import type { PiperSelections } from '../../../shared/lib/tts/piper'
 import { buildSessionTrack, sessionPosition, type SessionCue } from './sessionTrack'
 
 type Status = 'stopped' | 'preparing' | 'ready' | 'playing' | 'paused'

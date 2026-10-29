@@ -1,99 +1,57 @@
 import { useEffect, useRef, useState } from 'react'
 import { getRecording, type IWord } from '../../../entities/word'
-import {
-  prepareSpeech,
-  speakText,
-  stopSpeech,
-} from '../../../shared/lib/tts/speech'
-import { playAudio } from '../../../shared/lib/audio/playAudio'
+import { getPiperAudio } from '../../../shared/lib/tts/piperAudio'
+import { piperLanguage, type PiperSelections } from '../../../shared/lib/tts/piper'
 
-type SelectedVoices = {
-  en: string
-  ru: string
-  de: string
-  uk: string
-}
-
-export function useWordPlayback(selectedVoices: SelectedVoices) {
+export function useWordPlayback(selectedVoices: PiperSelections) {
   const [activeWordId, setActiveWordId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const playbackRef = useRef<{ controller: AbortController; context: AudioContext | null } | null>(null)
 
-  const playbackRef = useRef<{ cancelled: boolean } | null>(null)
-  const audioRef = useRef<ReturnType<typeof playAudio> | null>(null)
-
-  function getVoiceForLanguage(language: string) {
-    if (language === 'en') {
-      return selectedVoices.en
-    } else if (language === 'ru') {
-      return selectedVoices.ru
-    } else if (language === 'de') {
-      return selectedVoices.de
-    } else if (language === 'uk') {
-      return selectedVoices.uk
-    } else {
-      return ''
-    }
-  }
-  const playWord = async (
-    word: IWord,
-    translationSource: 'tts' | 'recording' = 'tts',
-  ) => {
-    // Не запускаем второе слово, пока заняты первым.
+  async function playWord(word: IWord, translationSource: 'tts' | 'recording' = 'tts') {
     if (playbackRef.current) return
-
-    const playback = { cancelled: false }
+    const playback = { controller: new AbortController(), context: null as AudioContext | null }
+    const signal = playback.controller.signal
     playbackRef.current = playback
-
-    setActiveWordId(word._id)
-    setError(null)
-
+    setActiveWordId(word._id); setError(null)
     try {
-      let recordingBlob: Blob | null = null
-
-      if (translationSource === 'recording') {
-        recordingBlob = await getRecording(word._id)
-
-        if (playback.cancelled) return
-      }
-
-      await prepareSpeech(
-        translationSource === 'recording' ?
-          [word.sourceLanguage]
-        : [word.sourceLanguage, word.targetLanguage],
-      )
-
-      // Пользователь мог нажать «Стоп» во время подготовки.
-      if (playback.cancelled) return
-
-      const result = await speakText({
-        text: word.original,
-        language: word.sourceLanguage,
-        voiceURI: getVoiceForLanguage(word.sourceLanguage),
-      })
-
-      // После остановки оригинала перевод не запускаем.
-      if (playback.cancelled || result === 'cancelled') return
-
-      if (recordingBlob) {
-        const player = playAudio(recordingBlob)
-        audioRef.current = player
-        await player.finished
-      } else {
-        await speakText({
-          text: word.translation,
-          language: word.targetLanguage,
-          voiceURI: getVoiceForLanguage(word.targetLanguage),
+      const context = new AudioContext()
+      playback.context = context
+      // Resume directly from the click, before downloading or generating audio.
+      // Word previews use Web Audio in the foreground; sessions use HTML Audio.
+      await context.resume()
+      const recording = translationSource === 'recording' ? await getRecording(word._id) : null
+      for (const phase of ['original', 'translation'] as const) {
+        signal.throwIfAborted()
+        let audio: Blob
+        if (phase === 'translation' && recording) audio = recording
+        else {
+          const language = piperLanguage(phase === 'original' ? word.sourceLanguage : word.targetLanguage)
+          audio = await getPiperAudio({ language, voice: selectedVoices[language], text: phase === 'original' ? word.original : word.translation }, signal, () => {})
+        }
+        signal.throwIfAborted()
+        const buffer = await context.decodeAudioData(await audio.arrayBuffer())
+        signal.throwIfAborted()
+        await new Promise<void>((resolve, reject) => {
+          const source = context.createBufferSource()
+          source.buffer = buffer
+          source.connect(context.destination)
+          function finish() {
+            signal.removeEventListener('abort', finish)
+            source.onended = null
+            source.disconnect()
+            resolve()
+          }
+          source.onended = finish
+          signal.addEventListener('abort', finish, { once: true })
+          try { source.start() }
+          catch (cause) { reject(cause); finish() }
         })
       }
-    } catch (error) {
-      if (!playback.cancelled) {
-        setError(
-          error instanceof Error ? error.message : 'Не удалось озвучить слово',
-        )
-      }
+    } catch (cause) {
+      if (!signal.aborted) setError(cause instanceof Error ? cause.message : 'Не удалось озвучить слово')
     } finally {
-      audioRef.current?.stop()
-      audioRef.current = null
+      if (playback.context?.state !== 'closed') await playback.context?.close().catch(() => {})
       if (playbackRef.current === playback) {
         playbackRef.current = null
         setActiveWordId(null)
@@ -101,30 +59,16 @@ export function useWordPlayback(selectedVoices: SelectedVoices) {
     }
   }
 
-  const stop = () => {
-    if (!playbackRef.current) return
-
-    playbackRef.current.cancelled = true
-    stopSpeech()
-    audioRef.current?.stop()
+  function stop() {
+    const playback = playbackRef.current
+    playback?.controller.abort()
+    if (playback?.context?.state !== 'closed') void playback?.context?.close().catch(() => {})
   }
 
-  useEffect(() => {
-    return () => {
-      if (playbackRef.current) {
-        playbackRef.current.cancelled = true
-        playbackRef.current = null
-        stopSpeech()
-        audioRef.current?.stop()
-      }
-    }
+  useEffect(() => () => {
+    stop()
+    playbackRef.current = null
   }, [])
 
-  return {
-    playWord,
-    stop,
-    activeWordId,
-    isPlaying: activeWordId !== null,
-    error,
-  }
+  return { playWord, stop, activeWordId, isPlaying: activeWordId !== null, error }
 }
