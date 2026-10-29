@@ -10,6 +10,7 @@ export function PiperAudioProbe() {
   const [error, setError] = useState('')
   const [audioUrl, setAudioUrl] = useState('')
   const task = useRef<{ worker: Worker; timer: ReturnType<typeof setTimeout> } | null>(null)
+  const lastStatus = useRef('')
 
   function dispose() {
     if (!task.current) return
@@ -28,6 +29,7 @@ export function PiperAudioProbe() {
       return
     }
     dispose()
+    lastStatus.current = 'Запуск Worker'
     setBusy(true)
     setStatus('Загрузка Piper и выбранной модели, затем генерация. Первый запуск может занять несколько минут…')
     function fail(message: string) {
@@ -35,18 +37,18 @@ export function PiperAudioProbe() {
     }
     try {
       const worker = new Worker(new URL('../model/piperProbe.worker.ts', import.meta.url), { type: 'module' })
-      const timer = setTimeout(() => fail('Piper не завершил работу за 3 минуты. Возможны медленная сеть, нехватка памяти или несовместимость модели.'), 180_000)
+      const timer = setTimeout(() => fail(piperError(new Error(`Генерация не завершилась за 3 минуты. Последнее действие: ${lastStatus.current}`), { language, stage: 'timeout' })), 180_000)
       task.current = { worker, timer }
       worker.onerror = (event) => {
         event.preventDefault()
-        if (task.current?.worker === worker) fail(piperError(event.message))
+        if (task.current?.worker === worker) fail(piperError(event.error ?? new Error(event.message || 'Worker error without message'), { language, stage: 'worker' }))
       }
       worker.onmessageerror = () => {
         if (task.current?.worker === worker) fail('Браузер не смог получить результат Piper из Web Worker.')
       }
       worker.onmessage = ({ data }: MessageEvent<PiperReply>) => {
         if (task.current?.worker !== worker) return
-        if (data.type === 'status') setStatus(data.message)
+        if (data.type === 'status') { lastStatus.current = data.message; setStatus(data.message) }
         else if (data.type === 'error') fail(data.message)
         else {
           dispose(); setBusy(false)
@@ -55,7 +57,7 @@ export function PiperAudioProbe() {
         }
       }
       worker.postMessage({ language, text })
-    } catch (cause) { fail(piperError(cause)) }
+    } catch (cause) { fail(piperError(cause, { language, stage: 'worker' })) }
   }
 
   return (

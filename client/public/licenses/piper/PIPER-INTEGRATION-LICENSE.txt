@@ -6,10 +6,12 @@ License version 3. You may copy, modify and redistribute them under that license
 
 client/src/features/play-listening-session/model/piperProbe.ts
 client/src/features/play-listening-session/model/piperProbe.worker.ts
+client/src/features/play-listening-session/model/piperOpfs.ts
 client/src/features/play-listening-session/model/piperText.ts
 client/src/features/play-listening-session/model/piperUkrainian.ts
 client/src/features/play-listening-session/ui/PiperAudioProbe.tsx
 client/tests/piper-text.test.cjs
+client/tests/piper-opfs.test.cjs
 client/tests/piper-browser-smoke.mjs
 
 This software is provided WITHOUT ANY WARRANTY; without even the implied

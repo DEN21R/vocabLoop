@@ -1,18 +1,28 @@
 import { predict } from '@diffusionstudio/vits-web'
 import { predictUkrainian } from './piperUkrainian'
-import { piperError, validatePiperRequest, type PiperRequest, type PiperReply } from './piperProbe'
+import { preparePiperOpfs } from './piperOpfs'
+import { piperError, validatePiperRequest, type PiperRequest, type PiperReply, type PiperStage } from './piperProbe'
 
 const reply = (message: PiperReply) => self.postMessage(message)
-const status = (message: string) => reply({ type: 'status', message })
+let stage: PiperStage = 'validate'
+let language: PiperRequest['language'] | undefined
+const status = (message: string, nextStage?: PiperStage) => {
+  if (nextStage) stage = nextStage
+  reply({ type: 'status', message })
+}
 const failure = (error: unknown) => {
   console.error('[Piper probe]', error)
-  reply({ type: 'error', message: piperError(error) })
+  reply({ type: 'error', message: piperError(error, { stage, language }) })
 }
 
-// A fresh worker for each generation bounds retained upstream ONNX/eSpeak heaps.
+// Keep isolation: upstream predict() neither reuses nor releases its ONNX session.
+// Retaining this worker alone would accumulate sessions, not reuse a model.
 self.onmessage = async ({ data }: MessageEvent<PiperRequest>) => {
   try {
     const request = validatePiperRequest(data)
+    language = data.language
+    if (data.language !== 'uk') await preparePiperOpfs(request.voiceId as Exclude<typeof request.voiceId, 'uk_UA-ukrainian_tts-medium'>, status)
+    stage = 'synthesis'
     let lastMb = -1
     const audio = data.language === 'uk'
       ? await predictUkrainian(request.text, status)

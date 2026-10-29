@@ -78,6 +78,9 @@ Changes: a separate optional test UI and Worker; the Ukrainian adapter uses
 Unicode text phonemes from the unchanged uk_UA-ukrainian_tts-medium config,
 instead of passing eSpeak's universal IDs to the old lada-x_low model.
 The upstream WASM, eSpeak source and voice weights are unmodified.
+The integration also repairs empty/interrupted OPFS cache files and uses
+Worker sync OPFS access on Safari versions without createWritable().
+The upstream phonemizer and inference implementation are not patched.
 
 Rights / warranty
 -----------------

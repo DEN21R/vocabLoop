@@ -58,6 +58,12 @@ test('worker request validation accepts only four languages and bounded nonempty
     assert.throws(() => validatePiperRequest(request))
   }
 })
+test('Piper diagnostics retain original error type/message, stage, language and model', () => {
+  const { piperError } = load('piperProbe.ts')
+  const message = piperError(new SyntaxError('Unexpected end of JSON input'), { language: 'en', stage: 'config' })
+  for (const expected of ['SyntaxError', 'Unexpected end of JSON input', 'config', 'en_US-ljspeech-medium']) assert(message.includes(expected))
+  assert(piperError(new DOMException('Connection lost', 'NetworkError'), { language: 'uk', stage: 'model' }).includes('NetworkError: Connection lost'))
+})
 for (const runFails of [false, true]) {
   test(`Ukrainian adapter runs without storage and releases its ONNX session on ${runFails ? 'failure' : 'success'}`, async () => {
     let released = 0

@@ -2,6 +2,8 @@
 // First: npm run build && npm run preview -- --host 127.0.0.1 --port 4173
 // Then: node tests/piper-browser-smoke.mjs
 // Override PIPER_CHROME_PATH for a Chromium executable outside Windows defaults.
+// PIPER_SIMULATE_SAFARI=1 disables createWritable inside test Workers and seeds
+// the empty OPFS config left by upstream on old Safari. This is not a real iPhone.
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync } from 'node:fs'
@@ -20,6 +22,7 @@ const temp = resolve(client, 'node_modules/.tmp')
 mkdirSync(temp, { recursive: true })
 const profile = mkdtempSync(resolve(temp, 'piper-browser-'))
 const origin = 'http://127.0.0.1:4173'
+const simulateOldSafari = process.env.PIPER_SIMULATE_SAFARI === '1'
 const chrome = spawn(executable, ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
   '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] })
 let ws
@@ -72,18 +75,28 @@ try {
   }
   assert.equal(await evaluate('location.origin'), origin)
   console.log('Browser:', await (await fetch(`http://127.0.0.1:${port}/json/version`)).json().then((value) => value.Browser))
-  const cases = [['en', 'hello'], ['de', 'Hallo'], ['ru', 'привет'], ['uk', 'привіт'],
+  if (simulateOldSafari) await evaluate(`(async()=>{
+    const root = await navigator.storage.getDirectory();
+    const dir = await root.getDirectoryHandle('piper', {create:true});
+    await dir.getFileHandle('en_US-ljspeech-medium.onnx.json', {create:true});
+  })()`)
+  const cases = simulateOldSafari ? [['en', 'hello'], ['en', 'hello'], ['de', 'Hallo'], ['de', 'Hallo'], ['ru', 'привет'], ['ru', 'привет'], ['uk', 'привіт'], ['uk', 'їжак']] : [['en', 'hello'], ['de', 'Hallo'], ['ru', 'привет'], ['uk', 'привіт'],
     ['uk', 'їжак'], ['uk', 'ґанок'], ['uk', 'єдність'], ['uk', 'Україна'], ['uk', 'з’їсти'], ['uk', 'приві́т'], ['en', 'hello']]
   const results = []
   for (const [language, text] of cases) {
     const started = Date.now()
     const result = await evaluate(`new Promise(resolve => {
-      const worker = new Worker('/assets/${worker}', { type: 'module' });
+      const simulateOldSafari = ${simulateOldSafari};
+      const wrapper = simulateOldSafari ? URL.createObjectURL(new Blob([
+        'FileSystemFileHandle.prototype.createWritable = undefined; await import(' + JSON.stringify(location.origin + '/assets/${worker}') + '); self.postMessage({type:"test-ready"});'
+      ], {type:'text/javascript'})) : null;
+      const worker = new Worker(wrapper || '/assets/${worker}', { type: 'module' });
       const statuses = [];
-      const done = value => { clearTimeout(timer); worker.terminate(); resolve(value); };
+      const done = value => { clearTimeout(timer); worker.terminate(); if(wrapper)URL.revokeObjectURL(wrapper); resolve(value); };
       const timer = setTimeout(() => done({error:'timeout'}), 180000);
       worker.onerror = event => done({error:event.message});
       worker.onmessage = async ({data}) => {
+        if(data.type === 'test-ready') { worker.postMessage(${JSON.stringify({ language, text })}); return; }
         if (data.type === 'error') return done({error:data.message});
         if (data.type === 'status') { statuses.push(data.message); return; }
         try {
@@ -94,7 +107,7 @@ try {
           done({bytes:data.audio.size, rate, duration:decoded.duration, peak, statuses});
         } catch(error) { done({error:String(error)}); }
       };
-      worker.postMessage(${JSON.stringify({ language, text })});
+      if(!simulateOldSafari)worker.postMessage(${JSON.stringify({ language, text })});
     })`)
     assert(!result.error, `${language}/${text}: ${result.error}`)
     assert(result.bytes > 44 && result.duration > 0.05 && result.peak > 0 && Number.isFinite(result.peak), JSON.stringify(result))
@@ -102,8 +115,12 @@ try {
     console.log(JSON.stringify({ language, text, ms: Date.now() - started, ...result, statuses: [result.statuses[0], result.statuses.at(-1)] }))
   }
   assert(results.find((result) => result.text === 'їжак').statuses.some((status) => status.includes('из кэша')), 'UK model must be reused from CacheStorage')
-  assert(!results.at(-1).statuses.some((status) => status.includes('загружено')), 'EN model must be reused from OPFS')
-  console.log('PASS: all four languages, Ukrainian letters/apostrophe/stress, model cache reuse.')
+  assert(!results.filter((result) => result.language === 'en').at(-1).statuses.some((status) => status.includes('загружено')), 'EN model must be reused from OPFS')
+  if (simulateOldSafari) {
+    assert(results[0].statuses.some((status) => status.includes('повреждённый кэш')), 'Repair old empty OPFS config')
+    assert(!results[1].statuses.some((status) => status.includes('Совместимая запись')), 'Reuse repaired model on the second call')
+  }
+  console.log(simulateOldSafari ? 'PASS: simulated old Safari OPFS, corrupt config repair, repeated EN/DE/RU/UK.' : 'PASS: all four languages, Ukrainian letters/apostrophe/stress, model cache reuse.')
 } finally {
   ws?.close()
   chrome.kill()
