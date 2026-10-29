@@ -1,4 +1,4 @@
-Vocabloop temporary Piper voice selection - attribution and dataset terms
+Vocabloop Piper voice selection - attribution and dataset terms
 
 Weights and model configurations are downloaded on demand and are not modified.
 Original MODEL_CARD files are supplied beside this notice. Their precise URLs

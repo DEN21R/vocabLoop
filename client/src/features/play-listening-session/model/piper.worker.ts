@@ -1,7 +1,7 @@
 import { predict } from '@diffusionstudio/vits-web'
 import { predictUkrainian } from './piperUkrainian'
 import { preparePiperOpfs } from './piperOpfs'
-import { piperError, validatePiperRequest, type PiperRequest, type PiperReply, type PiperStage } from './piperProbe'
+import { piperError, validatePiperRequest, type PiperRequest, type PiperReply, type PiperStage } from './piper'
 
 const reply = (message: PiperReply) => self.postMessage(message)
 let stage: PiperStage = 'validate'
@@ -12,7 +12,7 @@ const status = (message: string, nextStage?: PiperStage) => {
   reply({ type: 'status', message })
 }
 const failure = (error: unknown) => {
-  console.error('[Piper probe]', error)
+  console.error('[Piper]', error)
   reply({ type: 'error', message: piperError(error, { stage, language, voice }) })
 }
 

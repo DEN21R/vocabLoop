@@ -6,7 +6,7 @@ with copies of the binaries. The GPLv3 text is supplied locally in GPL-3.0.txt.
 
 Binary identity
 --------------
-The probe downloads @diffusionstudio/piper-wasm@1.0.0 from jsDelivr.
+Listening Sessions downloads @diffusionstudio/piper-wasm@1.0.0 from jsDelivr.
 Its npm gitHead is 69522c832bd52d7c16389e9a8aee568065027689.
 Both piper_phonemize.wasm and piper_phonemize.data have been checked against
 the Git blob hashes in that exact upstream commit. SHA-256 hashes and license
@@ -74,16 +74,19 @@ The new Piper integration, UI and tests are available in this repository:
 https://github.com/DEN21R/vocabLoop/tree/main/client/src/features/play-listening-session
 https://github.com/DEN21R/vocabLoop/tree/main/client/tests
 See PIPER-INTEGRATION-LICENSE.txt for the scope of its GPLv3 grant.
-Changes: a separate optional test UI and Worker; the Ukrainian adapter uses
+Changes: Listening Sessions uses a Piper Worker; the Ukrainian adapter uses
 Unicode text phonemes from the unchanged uk_UA-ukrainian_tts-medium config,
 instead of passing eSpeak's universal IDs to the old lada-x_low model.
 The upstream WASM, eSpeak source and voice weights are unmodified.
 The integration also repairs empty/interrupted OPFS cache files and uses
 Worker sync OPFS access on Safari versions without createWritable().
 The upstream phonemizer and inference implementation are not patched.
-The temporary UI allows per-language voice selection and stores preferences
+Listening Sessions allows per-language voice selection and stores preferences
 locally. Only the selected model is downloaded. Ukrainian lada/mykyta/tetiana
 share unchanged weights/config and select speaker IDs 0/1/2 respectively.
+Generated word/translation WAV clips are cached locally by text/language/voice.
+The session combines clips, recordings and pauses into one PCM WAV track.
+HTML Audio repeats that track natively; no per-word playback timers are used.
 Additional voice attribution and dataset terms: VOICE-SELECTION.txt.
 
 Rights / warranty

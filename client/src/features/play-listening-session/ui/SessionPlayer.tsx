@@ -1,71 +1,55 @@
-import { Box, Button, Typography } from '@mui/material'
-import { useRef } from 'react'
+import { useState } from 'react'
+import { Box, Button, MenuItem, TextField, Typography } from '@mui/material'
 import type { IWord } from '../../../entities/word'
+import { PIPER_VOICES, loadPiperSelections, savePiperSelections, type PiperSelections } from '../model/piper'
 import { useSessionPlayer } from '../model/useSessionPlayer'
-import { BackgroundAudioProbe } from './BackgroundAudioProbe'
 
-export default function SessionPlayer({
-  words,
-  intervalSeconds,
-}: {
-  words: IWord[]
-  intervalSeconds: number
-}) {
-  const { status, progress, error, play, pause, stop } = useSessionPlayer(
-    words,
-    intervalSeconds,
-  )
-  const word = words[progress.index]
-  const probeAudioRef = useRef<HTMLAudioElement | null>(null)
-
-  function playSession() {
-    probeAudioRef.current?.pause()
-    void play()
-  }
-
+export default function SessionPlayer({ words, intervalSeconds }: { words: IWord[]; intervalSeconds: number }) {
+  const [voices, setVoices] = useState(loadPiperSelections)
   return (
     <Box sx={{ mb: 3 }}>
-      <Typography>
-        Прослушивание по кругу. Интервал: {intervalSeconds} сек.
-      </Typography>
-      {words.length === 0 ?
-        <Typography>Добавьте слова для прослушивания.</Typography>
-      : <Typography>
-          {status === 'stopped' ?
-            'Остановлено'
-          : status === 'paused' ?
-            'На паузе'
-          : 'Воспроизводится'}
-          {' · '}
-          {progress.index + 1} / {words.length}: {word?.original} —{' '}
-          {word?.translation}
-        </Typography>
-      }
-      <Button
-        onClick={playSession}
-        disabled={status === 'playing' || words.length === 0}
-      >
-        {status === 'paused' ? 'Продолжить' : 'Запустить'}
-      </Button>
-      <Button onClick={pause} disabled={status !== 'playing'}>
-        Пауза
-      </Button>
-      <Button onClick={stop} disabled={status === 'stopped'}>
-        Стоп
-      </Button>
+      <Typography>Прослушивание по кругу. Интервал: {intervalSeconds} сек.</Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 2 }}>
+        {Object.entries(PIPER_VOICES).map(([language, entry]) => (
+          <TextField key={language} select label={`Голос · ${entry.name}`} value={voices[language as keyof PiperSelections]} sx={{ minWidth: 220 }}
+            onChange={(event) => {
+              const next = { ...voices, [language]: event.target.value }
+              savePiperSelections(next); setVoices(next)
+            }}>
+            {entry.voices.map((voice) => <MenuItem key={voice.id} value={voice.id}>{voice.label}</MenuItem>)}
+          </TextField>
+        ))}
+      </Box>
+      <Playback key={JSON.stringify([words.map((word) => [word._id, word.original, word.translation, word.sourceLanguage, word.targetLanguage, word.hasRecording, word.updatedAt]), intervalSeconds, voices])}
+        words={words} intervalSeconds={intervalSeconds} voices={voices} />
       <Typography variant="body2">
-        Если есть своя запись перевода, используется она. После паузы текущая
-        реплика звучит заново.
+        Сначала подготовьте аудио с открытым экраном, затем нажмите «Запустить».
+        Своя запись перевода имеет приоритет. Пауза сохраняет точное место воспроизведения.
+        Готовая озвучка сохраняется в браузере; после очистки данных сайта её потребуется подготовить заново.
       </Typography>
-      {error && (
-        <Typography color="error" role="alert">
-          {error}
-        </Typography>
-      )}
-      <BackgroundAudioProbe
-        audioRef={probeAudioRef}
-        onStart={() => { if (status !== 'stopped') stop() }}
-      />
+      <Typography variant="caption"><a href={`${import.meta.env.BASE_URL}licenses/piper/index.html`} target="_blank" rel="noreferrer">Лицензии и исходники Piper</a></Typography>
     </Box>
+  )
+}
+
+function Playback({ words, intervalSeconds, voices }: { words: IWord[]; intervalSeconds: number; voices: PiperSelections }) {
+  const { status, progress, error, message, ready, audioRef, prepare, play, pause, stop } = useSessionPlayer(words, intervalSeconds, voices)
+  const word = words[progress.index]
+  return (
+    <>
+      <audio ref={audioRef} loop preload="metadata" />
+      <Typography>
+        {status === 'preparing' ? 'Подготовка' : status === 'playing' ? 'Воспроизводится' : status === 'paused' ? 'На паузе' : ready ? 'Готово' : 'Остановлено'}
+        {word ? ` · ${progress.index + 1} / ${words.length}: ${word.original} — ${word.translation}` : ' · Добавьте слова для прослушивания.'}
+        {status === 'playing' && progress.phase === 'waiting' && ' · Интервал'}
+      </Typography>
+      <Button onClick={() => { void (ready ? play() : prepare()) }} disabled={status === 'playing' || status === 'preparing' || !words.length}>
+        {status === 'preparing' ? 'Подготовка…' : status === 'paused' ? 'Продолжить' : ready ? 'Запустить' : 'Подготовить аудио'}
+      </Button>
+      <Button onClick={pause} disabled={status !== 'playing'}>Пауза</Button>
+      <Button onClick={stop} disabled={status === 'stopped'}>Стоп</Button>
+      {message && <Typography role="status" variant="body2">{message}</Typography>}
+      {error && <Typography role="alert" color="error">{error}</Typography>}
+    </>
   )
 }

@@ -1,7 +1,7 @@
 import { HF_BASE, PATH_MAP, type VoiceId } from '@diffusionstudio/vits-web'
-import type { PiperStage } from './piperProbe'
+import type { PiperStage } from './piper'
 
-// Sizes of the unchanged, reviewed models used by the probe. A cancelled write
+// Sizes of the unchanged, reviewed models used by Listening Sessions. A cancelled write
 // must never be accepted as a complete model on the next generation.
 const MODEL_BYTES = {
   'en_US-ljspeech-medium': 63531379,

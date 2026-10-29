@@ -51,15 +51,16 @@ test('WAV is mono PCM16 with correct sizes, sample rate, saturation and invalid-
   assert.throws(() => pcmWav(Float32Array.of(NaN), 22050), /некорректное/u)
   assert.throws(() => pcmWav(new Float32Array(), 22050), /пустое/u)
 })
-test('worker request validation accepts only four languages and bounded nonempty text', () => {
-  const { validatePiperRequest } = load('piperProbe.ts')
+test('worker request validation accepts only four languages and nonempty dictionary text', () => {
+  const { validatePiperRequest } = load('piper.ts')
   for (const language of ['en', 'de', 'ru', 'uk']) assert(validatePiperRequest({ language, text: 'test' }).voiceId)
-  for (const request of [{ language: 'xx', text: 'a' }, { language: '__proto__', text: 'a' }, { language: 'uk', text: ' ' }, { language: 'uk', text: 'a'.repeat(61) }]) {
+  assert(validatePiperRequest({ language: 'en', text: 'a'.repeat(200) }).text)
+  for (const request of [{ language: 'xx', text: 'a' }, { language: '__proto__', text: 'a' }, { language: 'uk', text: ' ' }]) {
     assert.throws(() => validatePiperRequest(request))
   }
 })
 test('Piper diagnostics retain original error type/message, stage, language and model', () => {
-  const { piperError } = load('piperProbe.ts')
+  const { piperError } = load('piper.ts')
   const message = piperError(new SyntaxError('Unexpected end of JSON input'), { language: 'en', stage: 'config' })
   for (const expected of ['SyntaxError', 'Unexpected end of JSON input', 'config', 'en_US-ljspeech-medium']) assert(message.includes(expected))
   assert(piperError(new DOMException('Connection lost', 'NetworkError'), { language: 'uk', stage: 'model' }).includes('NetworkError: Connection lost'))
@@ -90,9 +91,9 @@ for (const [speaker, sid] of Object.entries(config.speaker_id_map)) for (const r
 }
 
 test('every listed voice validates only for its language and retains model/speaker identity', () => {
-  const { PIPER_VOICES, validatePiperRequest, piperError } = load('piperProbe.ts')
+  const { PIPER_VOICES, validatePiperRequest, piperError } = load('piper.ts')
   for (const [language, entry] of Object.entries(PIPER_VOICES)) for (const voice of entry.voices) {
-    const result = validatePiperRequest({ language, text: entry.word, voice: voice.id })
+    const result = validatePiperRequest({ language, text: 'слово', voice: voice.id })
     assert.equal(result.voiceId, voice.modelId)
     assert.equal(result.speaker, voice.speaker)
     assert.equal(result.choiceId, voice.id)
@@ -104,7 +105,7 @@ test('every listed voice validates only for its language and retains model/speak
 })
 
 test('voice preferences round-trip per language and recover from invalid/blocked storage', () => {
-  const { PIPER_VOICES, PIPER_SELECTION_KEY, loadPiperSelections, savePiperSelections } = load('piperProbe.ts')
+  const { PIPER_VOICES, PIPER_SELECTION_KEY, loadPiperSelections, savePiperSelections } = load('piper.ts')
   let saved
   const storage = { getItem: () => saved, setItem: (key, value) => { assert.equal(key, PIPER_SELECTION_KEY); saved = value } }
   const defaults = loadPiperSelections(storage)

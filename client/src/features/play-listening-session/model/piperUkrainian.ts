@@ -1,5 +1,5 @@
 import { pcmWav, textPhonemeIds, type TextVoiceConfig } from './piperText'
-import type { PiperStage } from './piperProbe'
+import type { PiperStage } from './piper'
 
 // Pin config and unchanged weights to the same upstream revision.
 const BASE = 'https://huggingface.co/diffusionstudio/piper-voices/resolve/840e38a7e26d813bd6221b78cfbaefa3585b3f71/uk/uk_UA/ukrainian_tts/medium/uk_UA-ukrainian_tts-medium.onnx'

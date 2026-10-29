@@ -1,4 +1,4 @@
-Vocabloop browser Piper probe - licenses and source access
+Vocabloop Listening Sessions Piper - licenses and source access
 
 Browsable license/source page: licenses/piper/index.html
 Complete source access and build directions: licenses/piper/SOURCE.txt

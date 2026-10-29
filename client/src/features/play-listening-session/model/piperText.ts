@@ -14,7 +14,7 @@ export function textPhonemeIds(text: string, config: TextVoiceConfig): number[] 
   function ids(phoneme: string) {
     const values = Object.hasOwn(map, phoneme) ? map[phoneme] : undefined
     if (!values?.length || values.some((id) => !Number.isInteger(id) || id < 0 || id >= config.num_symbols)) {
-      throw new Error(`Модель Piper не поддерживает символ «${phoneme}». Для украинской проверки вводите слова без цифр и латиницы.`)
+      throw new Error(`Модель Piper не поддерживает символ «${phoneme}». Украинская модель принимает украинский текст без цифр и латиницы.`)
     }
     return values
   }
@@ -30,20 +30,28 @@ export function textPhonemeIds(text: string, config: TextVoiceConfig): number[] 
   return result
 }
 
-export function pcmWav(pcm: Float32Array, sampleRate: number): Blob {
-  if (!pcm.length || !Number.isInteger(sampleRate) || sampleRate <= 0) throw new Error('Piper вернул пустое аудио.')
-  const bytes = new ArrayBuffer(44 + pcm.length * 2)
+export function wavHeader(samples: number, sampleRate: number): ArrayBuffer {
+  if (!Number.isSafeInteger(samples) || samples <= 0 || samples * 2 > 0xffffffff - 36 || !Number.isInteger(sampleRate) || sampleRate <= 0) throw new Error('Некорректный размер аудиотрека.')
+  const bytes = new ArrayBuffer(44)
   const view = new DataView(bytes)
   const tag = (offset: number, value: string) => [...value].forEach((char, index) => view.setUint8(offset + index, char.charCodeAt(0)))
-  tag(0, 'RIFF'); view.setUint32(4, bytes.byteLength - 8, true); tag(8, 'WAVE')
+  tag(0, 'RIFF'); view.setUint32(4, 36 + samples * 2, true); tag(8, 'WAVE')
   tag(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true)
   view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true)
   view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true)
-  tag(36, 'data'); view.setUint32(40, pcm.length * 2, true)
+  tag(36, 'data'); view.setUint32(40, samples * 2, true)
+  return bytes
+}
+
+export function pcmWav(pcm: Float32Array, sampleRate: number): Blob {
+  if (!pcm.length) throw new Error('Piper вернул пустое аудио.')
+  const header = wavHeader(pcm.length, sampleRate)
+  const bytes = new ArrayBuffer(pcm.length * 2)
+  const view = new DataView(bytes)
   pcm.forEach((value, index) => {
     if (!Number.isFinite(value)) throw new Error('Piper вернул некорректное аудио.')
     const sample = Math.max(-1, Math.min(1, value))
-    view.setInt16(44 + index * 2, sample < 0 ? sample * 32768 : sample * 32767, true)
+    view.setInt16(index * 2, sample < 0 ? sample * 32768 : sample * 32767, true)
   })
-  return new Blob([bytes], { type: 'audio/wav' })
+  return new Blob([header, bytes], { type: 'audio/wav' })
 }

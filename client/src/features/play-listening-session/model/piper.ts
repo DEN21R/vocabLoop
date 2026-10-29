@@ -6,20 +6,20 @@ const voice = (modelId: VoiceId, label: string, speaker?: string): PiperVoice =>
 })
 
 export const PIPER_VOICES = {
-  en: { name: 'English', word: 'hello', voices: [
+  en: { name: 'English', voices: [
     voice('en_US-ljspeech-medium', 'LJ Speech — женский, США'),
     voice('en_US-joe-medium', 'Joe — мужской, США'),
     voice('en_GB-alba-medium', 'Alba — женский, Шотландия'),
     voice('en_GB-northern_english_male-medium', 'Northern English — мужской, север Англии'),
   ] },
-  de: { name: 'Deutsch', word: 'Hallo', voices: [
+  de: { name: 'Deutsch', voices: [
     voice('de_DE-thorsten-medium', 'Thorsten — мужской, Германия'),
   ] },
-  ru: { name: 'Русский', word: 'привет', voices: [
+  ru: { name: 'Русский', voices: [
     voice('ru_RU-denis-medium', 'Денис — мужской'),
     voice('ru_RU-dmitri-medium', 'Дмитрий — мужской'),
   ] },
-  uk: { name: 'Українська', word: 'привіт', voices: [
+  uk: { name: 'Українська', voices: [
     voice('uk_UA-ukrainian_tts-medium', 'Лада — жіночий', 'lada'),
     voice('uk_UA-ukrainian_tts-medium', 'Микита — чоловічий', 'mykyta'),
     voice('uk_UA-ukrainian_tts-medium', 'Тетяна — жіночий', 'tetiana'),
@@ -38,7 +38,7 @@ export type PiperReply =
 export function validatePiperRequest(value: PiperRequest) {
   if (!value || !Object.hasOwn(PIPER_VOICES, value.language)) throw new Error('Выберите поддерживаемый язык Piper.')
   const text = typeof value.text === 'string' ? value.text.trim() : ''
-  if (!text || text.length > 60) throw new Error('Введите короткое слово или фразу (до 60 символов).')
+  if (!text) throw new Error('Введите текст для озвучивания.')
   const selected = getPiperVoice(value.language, value.voice)
   if (!selected) throw new Error('Выберите проверенный голос выбранного языка Piper.')
   return { text, voiceId: selected.modelId, speaker: selected.speaker, choiceId: selected.id }
@@ -47,6 +47,12 @@ export function validatePiperRequest(value: PiperRequest) {
 export function getPiperVoice(language: PiperLanguage, id?: string) {
   const voices = PIPER_VOICES[language].voices
   return id === undefined ? voices[0] : voices.find((item) => item.id === id)
+}
+
+export function piperLanguage(language: string): PiperLanguage {
+  const code = language.trim().toLowerCase().replace('_', '-').split('-')[0]
+  if (!Object.hasOwn(PIPER_VOICES, code)) throw new Error(`Piper не поддерживает язык «${language}». Доступны EN, DE, RU, UK.`)
+  return code as PiperLanguage
 }
 
 export type PiperSelections = Record<PiperLanguage, string>
