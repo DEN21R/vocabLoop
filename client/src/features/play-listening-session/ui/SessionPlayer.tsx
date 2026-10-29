@@ -1,6 +1,8 @@
 import { Box, Button, Typography } from '@mui/material'
+import { useRef } from 'react'
 import type { IWord } from '../../../entities/word'
 import { useSessionPlayer } from '../model/useSessionPlayer'
+import { BackgroundAudioProbe } from './BackgroundAudioProbe'
 
 export default function SessionPlayer({
   words,
@@ -14,6 +16,12 @@ export default function SessionPlayer({
     intervalSeconds,
   )
   const word = words[progress.index]
+  const probeAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  function playSession() {
+    probeAudioRef.current?.pause()
+    void play()
+  }
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -34,7 +42,7 @@ export default function SessionPlayer({
         </Typography>
       }
       <Button
-        onClick={play}
+        onClick={playSession}
         disabled={status === 'playing' || words.length === 0}
       >
         {status === 'paused' ? 'Продолжить' : 'Запустить'}
@@ -54,6 +62,10 @@ export default function SessionPlayer({
           {error}
         </Typography>
       )}
+      <BackgroundAudioProbe
+        audioRef={probeAudioRef}
+        onStart={() => { if (status !== 'stopped') stop() }}
+      />
     </Box>
   )
 }
