@@ -21,7 +21,7 @@ function Login() {
 
       localStorage.setItem('token', result.token)
 
-      navigate('/user/home')
+      navigate('/user/sessions')
     } catch {
       setSubmitError('Не удалось войти.')
     }
