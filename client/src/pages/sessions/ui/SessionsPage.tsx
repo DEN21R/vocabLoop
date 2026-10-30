@@ -10,6 +10,7 @@ import {
 import { getMe } from '../../../shared/api/auth'
 import { IconButton } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
+import backHome from '../../../shared/assets/backHome.png'
 
 function SessionsPage() {
   const [sessions, setSessions] = useState<ListeningSession[]>([])
@@ -77,86 +78,99 @@ function SessionsPage() {
   }, [])
 
   return (
-    <Box>
-      <Typography variant="h5">Привет {userName} 👋!</Typography>
-      <Typography sx={{ mt: 1 }}>
-        С возвращением, продолжаем идти к цели😊.
-      </Typography>
-      <Button
-        component={RouterLink}
-        sx={{
-          color: '#f78811',
-          border: '2px #f78811 solid',
-          borderRadius: '12px',
-          mt: 4,
-        }}
-        to="/user/home"
-      >
-        Выбрать слова и создать сессию
-      </Button>
-      {status === 'loading' && <Typography>Загрузка…</Typography>}
-      {status === 'error' && (
-        <Box>
-          <Typography color="error">Не удалось загрузить сессии</Typography>
-          <Button
-            onClick={() => {
-              setStatus('loading')
-              setAttempt((value) => value + 1)
-            }}
-          >
-            Повторить
-          </Button>
-        </Box>
-      )}
-      {status === 'success' && sessions.length === 0 && (
-        <Typography>Пока нет сессий</Typography>
-      )}
-      {deleteError && (
-        <Typography color="error" role="alert">
-          {deleteError}
+    <Box
+      sx={{
+        backgroundColor: 'transparent',
+        backgroundImage: `url(${backHome})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        mx: '-24px',
+        mt: '-24px',
+        minHeight: '100vh',
+      }}
+    >
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5">Привет {userName} 👋!</Typography>
+        <Typography sx={{ mt: 1 }}>
+          С возвращением, продолжаем идти к цели😊.
         </Typography>
-      )}
-      {status === 'success' &&
-        sessions.map((session) => (
-          <Box
-            key={session._id}
-            sx={{
-              my: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'left',
-              gap: 2,
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-              <Link
-                component={RouterLink}
-                underline="none"
-                sx={{
-                  fontWeight: 600,
-                  color: '#650f0f',
-                  '&:hover': {
-                    color: '#c18787',
-                  },
-                }}
-                to={`/user/sessions/${session._id}`}
-              >
-                {session.name}
-              </Link>
-              <Typography>{session.words.length} слов</Typography>
-            </Box>
-            <IconButton
-              sx={{ color: '#492703', ml: 'auto' }}
-              aria-label="Удалить сессию"
-              disabled={deletingId !== null}
+        <Button
+          component={RouterLink}
+          sx={{
+            color: '#f78811',
+            border: '2px #f78811 solid',
+            borderRadius: '12px',
+            mt: 4,
+          }}
+          to="/user/home"
+        >
+          Выбрать слова и создать сессию
+        </Button>
+        {status === 'loading' && <Typography>Загрузка…</Typography>}
+        {status === 'error' && (
+          <Box>
+            <Typography color="error">Не удалось загрузить сессии</Typography>
+            <Button
               onClick={() => {
-                void handleDelete(session)
+                setStatus('loading')
+                setAttempt((value) => value + 1)
               }}
             >
-              <DeleteIcon />
-            </IconButton>
+              Повторить
+            </Button>
           </Box>
-        ))}
+        )}
+        {status === 'success' && sessions.length === 0 && (
+          <Typography>Пока нет сессий</Typography>
+        )}
+        {deleteError && (
+          <Typography color="error" role="alert">
+            {deleteError}
+          </Typography>
+        )}
+        {status === 'success' &&
+          sessions.map((session) => (
+            <Box
+              key={session._id}
+              sx={{
+                my: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'left',
+                gap: 2,
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Link
+                  component={RouterLink}
+                  underline="none"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#650f0f',
+                    '&:hover': {
+                      color: '#c18787',
+                    },
+                  }}
+                  to={`/user/sessions/${session._id}`}
+                >
+                  {session.name}
+                </Link>
+                <Typography>{session.words.length} слов</Typography>
+              </Box>
+              <IconButton
+                sx={{ color: '#492703', ml: 'auto' }}
+                aria-label="Удалить сессию"
+                disabled={deletingId !== null}
+                onClick={() => {
+                  void handleDelete(session)
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          ))}
+      </Box>
     </Box>
   )
 }
