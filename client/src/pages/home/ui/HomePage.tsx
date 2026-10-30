@@ -8,10 +8,12 @@ import {
   MenuItem,
   Checkbox,
   FormControlLabel,
+  TextField,
 } from '@mui/material'
 import MicIcon from '@mui/icons-material/Mic'
 import { getWords, WordCard, type IWord } from '../../../entities/word'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { getSessions } from '../../../entities/listening-session'
 import AddWordForm from '../../../features/add-word/'
 import { DeleteWordButton } from '../../../features/delete-word'
 import {
@@ -39,6 +41,14 @@ function HomePage() {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<Status>('loading')
   const [words, setWords] = useState<IWord[]>([])
+  const [search, setSearch] = useState('')
+  const query = search.trim()
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [sessionWordIds, setSessionWordIds] = useState<Set<string> | null>(null)
+  const [sessionsError, setSessionsError] = useState('')
+  const request = useRef<AbortController | null>(null)
   const [selectedWordIds, setSelectedWordIds] = useState<string[]>([])
   const [selectedVoices, setSelectedVoices] = useState(loadPiperSelections)
   const [recordingWord, setRecordingWord] = useState<IWord | null>(null)
@@ -72,10 +82,13 @@ function HomePage() {
   }
 
   const handleWordCreated = (newWord: IWord) => {
-    setWords((previousWord) => [newWord, ...previousWord])
+    const matches = [newWord.original, newWord.translation].some((text) => text.toLowerCase().includes(query.toLowerCase()))
+    if (matches) setWords((previousWord) => [newWord, ...previousWord])
   }
 
   const handleWordDeleted = (wordId: string) => {
+    request.current?.abort()
+    setLoadingMore(false)
     setSelectedWordIds((ids) => ids.filter((id) => id !== wordId))
     setWords((previousWords) =>
       previousWords.filter((word) => word._id !== wordId),
@@ -83,24 +96,57 @@ function HomePage() {
   }
 
   useEffect(() => {
-    let cancelled = false
+    const controller = new AbortController()
+    request.current = controller
     const fetchWords = async () => {
       setStatus('loading')
+      setWords([]); setNextCursor(null); setLoadingMore(false); setLoadError('')
       try {
-        const result = await getWords()
-        if (cancelled) return
+        const result = await getWords({ search: query }, controller.signal)
+        if (controller.signal.aborted) return
         setWords(result.words)
+        setNextCursor(result.nextCursor ?? null)
         setStatus('success')
       } catch {
-        if (cancelled) return
+        if (controller.signal.aborted) return
         setStatus('error')
+      } finally {
+        if (request.current === controller) request.current = null
       }
     }
     fetchWords()
     return () => {
-      cancelled = true
+      controller.abort()
+      request.current?.abort()
     }
+  }, [query])
+
+  useEffect(() => {
+    let cancelled = false
+    getSessions().then(({ sessions }) => {
+      if (!cancelled) setSessionWordIds(new Set(sessions.flatMap((session) => session.words)))
+    }).catch(() => {
+      if (!cancelled) setSessionsError('Не удалось проверить состав сессий. Обновите страницу.')
+    })
+    return () => { cancelled = true }
   }, [])
+
+  async function loadMore() {
+    if (!nextCursor || request.current) return
+    const controller = new AbortController()
+    request.current = controller
+    setLoadingMore(true); setLoadError('')
+    try {
+      const result = await getWords({ cursor: nextCursor, search: query }, controller.signal)
+      if (controller.signal.aborted) return
+      setWords((current) => [...new Map([...current, ...result.words].map((word) => [word._id, word])).values()])
+      setNextCursor(result.nextCursor ?? null)
+    } catch {
+      if (!controller.signal.aborted) setLoadError('Не удалось загрузить следующую страницу. Повторите попытку.')
+    } finally {
+      if (request.current === controller) { request.current = null; setLoadingMore(false) }
+    }
+  }
 
   function handleRecordingSaved(wordId: string) {
     setWords((previousWords) =>
@@ -127,6 +173,9 @@ function HomePage() {
         selectedVoices={selectedVoices}
         onVoiceChange={handleVoiceChange}
       />
+      <TextField label="Поиск по слову или переводу" value={search} fullWidth size="small" sx={{ mb: 2 }}
+        slotProps={{ htmlInput: { maxLength: 200 } }} onChange={(event) => { stop(); setSearch(event.target.value) }} />
+      {sessionsError && <Typography color="error">{sessionsError}</Typography>}
       {status === 'success' && (
         <Box>
           <Button
@@ -152,7 +201,7 @@ function HomePage() {
         )}
 
         {status === 'success' && words.length === 0 && (
-          <Typography>Пока нет слов</Typography>
+          <Typography>{query ? 'Ничего не найдено' : 'Пока нет слов'}</Typography>
         )}
 
         <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column' }}>
@@ -174,7 +223,8 @@ function HomePage() {
                 label="В сессию"
                 control={
                   <Checkbox
-                    checked={selectedWordIds.includes(word._id)}
+                    checked={sessionWordIds?.has(word._id) || selectedWordIds.includes(word._id)}
+                    disabled={!sessionWordIds || sessionWordIds.has(word._id)}
                     onChange={(_, checked) => setSelectedWordIds((ids) =>
                       checked ? [...ids, word._id] : ids.filter((id) => id !== word._id),
                     )}
@@ -252,6 +302,12 @@ function HomePage() {
               </Box>
             </Box>
           ))}
+          {loadError && <Typography color="error">{loadError}</Typography>}
+          {status === 'success' && nextCursor && (
+            <Button onClick={() => { void loadMore() }} disabled={loadingMore}>
+              {loadingMore ? 'Загружаем…' : 'Загрузить ещё'}
+            </Button>
+          )}
           <RecordWordDialog
             open={recordingWord !== null}
             wordId={recordingWord?._id ?? ''}

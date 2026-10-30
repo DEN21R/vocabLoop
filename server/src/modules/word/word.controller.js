@@ -1,4 +1,5 @@
 import Word from './Word.js'
+import mongoose from 'mongoose'
 import { translateText } from '../../services/translationService.js'
 
 export const createWord = async (req, res) => {
@@ -68,11 +69,36 @@ export const createWord = async (req, res) => {
 
 export const getWords = async (req, res) => {
   try {
-    const currentWords = await Word.find({ user: req.user.id }).sort({
-      createdAt: -1,
-    })
-    res.status(200).json({
-      words: currentWords,
+    const filter = { user: req.user.id }
+    const { limit, cursor, search = '' } = req.query
+    if (typeof search !== 'string' || search.length > 200) {
+      return res.status(400).json({ message: 'Некорректный поисковый запрос' })
+    }
+    const conditions = []
+    if (search.trim()) {
+      const literal = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      conditions.push({ $or: [{ original: { $regex: literal, $options: 'i' } }, { translation: { $regex: literal, $options: 'i' } }] })
+    }
+    if (cursor !== undefined) {
+      if (typeof cursor !== 'string') return res.status(400).json({ message: 'Некорректная страница' })
+      const [date, id] = cursor.split('_')
+      const createdAt = new Date(date)
+      if (!date || !mongoose.isObjectIdOrHexString(id) || !Number.isFinite(createdAt.getTime()) || cursor.split('_').length !== 2) {
+        return res.status(400).json({ message: 'Некорректная страница' })
+      }
+      conditions.push({ $or: [{ createdAt: { $lt: createdAt } }, { createdAt, _id: { $lt: id } }] })
+    }
+    if (conditions.length) filter.$and = conditions
+    const query = Word.find(filter).sort({ createdAt: -1, _id: -1 })
+    // Existing callers without pagination still receive the complete list.
+    if (limit === undefined) return res.status(200).json({ words: await query })
+    if (limit !== '20') return res.status(400).json({ message: 'Размер страницы должен быть 20' })
+    const page = await query.limit(21)
+    const words = page.slice(0, 20)
+    const last = words.at(-1)
+    return res.status(200).json({
+      words,
+      nextCursor: page.length > 20 ? `${last.createdAt.toISOString()}_${last._id}` : null,
     })
   } catch (error) {
     return res.status(500).json({ message: 'Failed to get worlds' })
