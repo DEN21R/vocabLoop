@@ -88,6 +88,19 @@ export const getSession = async (req, res) => {
   }
 }
 
+export const deleteSession = async (req, res) => {
+  try {
+    if (!isId(req.params.id)) {
+      return res.status(400).json({ message: 'Некорректный ID набора' })
+    }
+    const session = await ListeningSession.findOneAndDelete({ _id: req.params.id, user: req.user.id })
+    if (!session) return res.status(404).json({ message: 'Набор не найден' })
+    return res.status(204).end()
+  } catch {
+    return res.status(500).json({ message: 'Не удалось удалить сессию' })
+  }
+}
+
 export const updateSession = async (req, res) => {
   try {
     if (!isId(req.params.id)) {

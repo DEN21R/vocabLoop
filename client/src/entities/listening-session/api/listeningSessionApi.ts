@@ -6,6 +6,10 @@ export async function getSessions() {
   return response.data
 }
 
+export async function deleteSession(id: string) {
+  await api.delete(`/listening-sessions/${id}`)
+}
+
 // При открытии сервер возвращает объекты слов вместо ID.
 export async function getSession<TWord>(id: string) {
   const response = await api.get<{
