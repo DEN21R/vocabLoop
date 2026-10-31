@@ -2,6 +2,9 @@ import {
   Box,
   Button,
   Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
   IconButton,
   Typography,
   Select,
@@ -9,8 +12,11 @@ import {
   Checkbox,
   FormControlLabel,
   TextField,
+  Tooltip,
 } from '@mui/material'
 import MicIcon from '@mui/icons-material/Mic'
+import CloseIcon from '@mui/icons-material/Close'
+import ramImage from '../../../shared/assets/ram.png'
 import { getWords, WordCard, type IWord } from '../../../entities/word'
 import { useEffect, useRef, useState } from 'react'
 import { getSessions } from '../../../entities/listening-session'
@@ -43,6 +49,8 @@ function loadTranslationSources() {
 
 function HomePage() {
   const [open, setOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const closeHelp = () => setHelpOpen(false)
   const [status, setStatus] = useState<Status>('loading')
   const [words, setWords] = useState<IWord[]>([])
   const [search, setSearch] = useState('')
@@ -218,14 +226,61 @@ function HomePage() {
       {sessionsError && <Typography color="error">{sessionsError}</Typography>}
       {status === 'success' && (
         <Box>
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#5d2c07', mb: 2 }}
-            onClick={handleClickOpen}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#5d2c07' }}
+              onClick={handleClickOpen}
+            >
+              добавить слово
+            </Button>
+            <Tooltip title="Как создать сессию">
+              <IconButton
+                aria-label="Открыть подсказку о создании сессии"
+                onClick={() => setHelpOpen(true)}
+                sx={{ p: 0, width: 64, height: 64, overflow: 'hidden', borderRadius: '50%', flexShrink: 0 }}
+              >
+                <Box component="img" src={ramImage} alt=""
+                  sx={{ width: 64, height: 64, objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.5)', borderRadius: '50%' }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Dialog
+            open={helpOpen}
+            onClose={closeHelp}
+            fullWidth
+            maxWidth="sm"
+            aria-labelledby="create-session-help-title"
+            slotProps={{ paper: { sx: { borderRadius: 3, bgcolor: '#fcf5f0', color: '#5d2c07' } } }}
           >
-            добавить слово
-          </Button>
-
+            <DialogTitle id="create-session-help-title" sx={{ pr: 7 }}>Как создать сессию</DialogTitle>
+            <IconButton aria-label="Закрыть подсказку" onClick={closeHelp}
+              sx={{ position: 'absolute', right: 12, top: 12, color: '#895a39' }}>
+              <CloseIcon />
+            </IconButton>
+            <DialogContent sx={{ pb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 1, color: '#895a39' }}>1. Выберите слова</Typography>
+              <Typography sx={{ mb: 1 }}>
+                Добавьте нужные слова в словарь, выберите голоса в меню «Выбрать голос»
+                и прослушайте оригинал и перевод кнопкой ▶ рядом со словом.
+              </Typography>
+              <Typography>
+                Отметьте «В сессию» у нужных слов. Порядок будет таким же, как очередность выбора.
+                Слова, уже входящие в сессию, отмечены и недоступны для повторного выбора.
+                Найти остальные слова можно через поиск или кнопку «Загрузить ещё».
+              </Typography>
+              <Divider sx={{ my: 2, borderColor: '#e7c4a7' }} />
+              <Typography variant="h6" sx={{ mb: 1, color: '#895a39' }}>2. Создайте сессию</Typography>
+              <Typography sx={{ mb: 1 }}>
+                Введите «Название сессии» и нажмите «Создать сессию из выбранных слов».
+                Для создания нужны название и хотя бы одно выбранное слово.
+              </Typography>
+              <Typography>
+                После создания откроется страница сессии. Нажмите «Подготовить аудио»,
+                дождитесь окончания подготовки и нажмите ▶ в плеере.
+              </Typography>
+            </DialogContent>
+          </Dialog>
           <Dialog open={open} onClose={handleClickClose}>
             <AddWordForm onCreated={handleWordCreated} />
           </Dialog>
