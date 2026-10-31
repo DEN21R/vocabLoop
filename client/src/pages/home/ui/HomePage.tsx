@@ -23,7 +23,11 @@ import {
 } from '../../../features/play-word'
 import { RecordWordDialog } from '../../../features/record-word'
 import { CreateSessionForm } from '../../../features/create-listening-session'
-import { loadPiperSelections, savePiperSelections, type PiperLanguage } from '../../../shared/lib/tts/piper'
+import {
+  loadPiperSelections,
+  savePiperSelections,
+  type PiperLanguage,
+} from '../../../shared/lib/tts/piper'
 
 type Status = 'loading' | 'success' | 'error'
 
@@ -64,10 +68,7 @@ function HomePage() {
     error: playbackError,
   } = useWordPlayback(selectedVoices)
 
-  function handleVoiceChange(
-    language: PiperLanguage,
-    voiceId: string,
-  ) {
+  function handleVoiceChange(language: PiperLanguage, voiceId: string) {
     stop()
     const updatedVoices = { ...selectedVoices, [language]: voiceId }
     savePiperSelections(updatedVoices)
@@ -82,7 +83,9 @@ function HomePage() {
   }
 
   const handleWordCreated = (newWord: IWord) => {
-    const matches = [newWord.original, newWord.translation].some((text) => text.toLowerCase().includes(query.toLowerCase()))
+    const matches = [newWord.original, newWord.translation].some((text) =>
+      text.toLowerCase().includes(query.toLowerCase()),
+    )
     if (matches) setWords((previousWord) => [newWord, ...previousWord])
   }
 
@@ -100,7 +103,10 @@ function HomePage() {
     request.current = controller
     const fetchWords = async () => {
       setStatus('loading')
-      setWords([]); setNextCursor(null); setLoadingMore(false); setLoadError('')
+      setWords([])
+      setNextCursor(null)
+      setLoadingMore(false)
+      setLoadError('')
       try {
         const result = await getWords({ search: query }, controller.signal)
         if (controller.signal.aborted) return
@@ -123,28 +129,52 @@ function HomePage() {
 
   useEffect(() => {
     let cancelled = false
-    getSessions().then(({ sessions }) => {
-      if (!cancelled) setSessionWordIds(new Set(sessions.flatMap((session) => session.words)))
-    }).catch(() => {
-      if (!cancelled) setSessionsError('Не удалось проверить состав сессий. Обновите страницу.')
-    })
-    return () => { cancelled = true }
+    getSessions()
+      .then(({ sessions }) => {
+        if (!cancelled)
+          setSessionWordIds(
+            new Set(sessions.flatMap((session) => session.words)),
+          )
+      })
+      .catch(() => {
+        if (!cancelled)
+          setSessionsError(
+            'Не удалось проверить состав сессий. Обновите страницу.',
+          )
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   async function loadMore() {
     if (!nextCursor || request.current) return
     const controller = new AbortController()
     request.current = controller
-    setLoadingMore(true); setLoadError('')
+    setLoadingMore(true)
+    setLoadError('')
     try {
-      const result = await getWords({ cursor: nextCursor, search: query }, controller.signal)
+      const result = await getWords(
+        { cursor: nextCursor, search: query },
+        controller.signal,
+      )
       if (controller.signal.aborted) return
-      setWords((current) => [...new Map([...current, ...result.words].map((word) => [word._id, word])).values()])
+      setWords((current) => [
+        ...new Map(
+          [...current, ...result.words].map((word) => [word._id, word]),
+        ).values(),
+      ])
       setNextCursor(result.nextCursor ?? null)
     } catch {
-      if (!controller.signal.aborted) setLoadError('Не удалось загрузить следующую страницу. Повторите попытку.')
+      if (!controller.signal.aborted)
+        setLoadError(
+          'Не удалось загрузить следующую страницу. Повторите попытку.',
+        )
     } finally {
-      if (request.current === controller) { request.current = null; setLoadingMore(false) }
+      if (request.current === controller) {
+        request.current = null
+        setLoadingMore(false)
+      }
     }
   }
 
@@ -173,8 +203,18 @@ function HomePage() {
         selectedVoices={selectedVoices}
         onVoiceChange={handleVoiceChange}
       />
-      <TextField label="Поиск по слову или переводу" value={search} fullWidth size="small" sx={{ mb: 2 }}
-        slotProps={{ htmlInput: { maxLength: 200 } }} onChange={(event) => { stop(); setSearch(event.target.value) }} />
+      <TextField
+        label="Поиск по слову или переводу"
+        value={search}
+        fullWidth
+        size="small"
+        sx={{ mb: 2 }}
+        slotProps={{ htmlInput: { maxLength: 200 } }}
+        onChange={(event) => {
+          stop()
+          setSearch(event.target.value)
+        }}
+      />
       {sessionsError && <Typography color="error">{sessionsError}</Typography>}
       {status === 'success' && (
         <Box>
@@ -201,7 +241,9 @@ function HomePage() {
         )}
 
         {status === 'success' && words.length === 0 && (
-          <Typography>{query ? 'Ничего не найдено' : 'Пока нет слов'}</Typography>
+          <Typography>
+            {query ? 'Ничего не найдено' : 'Пока нет слов'}
+          </Typography>
         )}
 
         <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column' }}>
@@ -223,11 +265,24 @@ function HomePage() {
                 label="В сессию"
                 control={
                   <Checkbox
-                    checked={sessionWordIds?.has(word._id) || selectedWordIds.includes(word._id)}
+                    sx={{
+                      color: '#FF9800',
+                      '&.Mui-checked': {
+                        color: '#FF9800',
+                      },
+                    }}
+                    checked={
+                      sessionWordIds?.has(word._id) ||
+                      selectedWordIds.includes(word._id)
+                    }
                     disabled={!sessionWordIds || sessionWordIds.has(word._id)}
-                    onChange={(_, checked) => setSelectedWordIds((ids) =>
-                      checked ? [...ids, word._id] : ids.filter((id) => id !== word._id),
-                    )}
+                    onChange={(_, checked) =>
+                      setSelectedWordIds((ids) =>
+                        checked ?
+                          [...ids, word._id]
+                        : ids.filter((id) => id !== word._id),
+                      )
+                    }
                   />
                 }
               />
@@ -304,7 +359,13 @@ function HomePage() {
           ))}
           {loadError && <Typography color="error">{loadError}</Typography>}
           {status === 'success' && nextCursor && (
-            <Button onClick={() => { void loadMore() }} disabled={loadingMore}>
+            <Button
+              sx={{ color: '#f78811' }}
+              onClick={() => {
+                void loadMore()
+              }}
+              disabled={loadingMore}
+            >
               {loadingMore ? 'Загружаем…' : 'Загрузить ещё'}
             </Button>
           )}
