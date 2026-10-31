@@ -6,12 +6,11 @@ import { updateSession } from '../api/updateSession'
 
 interface Props {
   session: Omit<ListeningSession, 'words'> & { words: IWord[] }
-  availableWords: IWord[]
   onWordsChange: (words: IWord[]) => void
   onIntervalSaved: (intervalSeconds: number) => void
 }
 
-export default function EditSessionForm({ session, availableWords, onWordsChange, onIntervalSaved }: Props) {
+export default function EditSessionForm({ session, onWordsChange, onIntervalSaved }: Props) {
   const [name, setName] = useState(session.name)
   const [interval, setInterval] = useState(String(session.intervalSeconds))
   const [words, setWords] = useState(session.words)
@@ -28,6 +27,23 @@ export default function EditSessionForm({ session, availableWords, onWordsChange
     setWords(next)
     onWordsChange(next)
     setSaved(false)
+  }
+
+  async function removeWord(wordId: string) {
+    if (saving) return
+    const next = words.filter((word) => word._id !== wordId)
+    setSaving(true)
+    setSaved(false)
+    setError('')
+    try {
+      await updateSession(session._id, { words: next.map((word) => word._id) })
+      setWords(next)
+      onWordsChange(next)
+    } catch {
+      setError('Не удалось убрать слово из сессии. Попробуйте ещё раз.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -60,8 +76,6 @@ export default function EditSessionForm({ session, availableWords, onWordsChange
     }
   }
 
-  const otherWords = availableWords.filter((word) => !words.some((selected) => selected._id === word._id))
-
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <TextField
@@ -82,31 +96,13 @@ export default function EditSessionForm({ session, availableWords, onWordsChange
         slotProps={{ htmlInput: { min: 0, max: 60, step: 1 } }}
       />
       <Typography>Слова в порядке воспроизведения</Typography>
-      {words.length === 0 && <Typography>Сессия пустая. Можно добавить слова ниже или сохранить пустой набор.</Typography>}
+      {words.length === 0 && <Typography>Сессия пустая. Добавить слова можно на странице «Все слова», выбрав эту сессию.</Typography>}
       {words.map((word, index) => (
         <Box key={word._id}>
           <Typography>{index + 1}. {word.original} — {word.translation}</Typography>
           <Button type="button" disabled={saving || index === 0} onClick={() => moveWord(index, -1)}>Выше</Button>
           <Button type="button" disabled={saving || index === words.length - 1} onClick={() => moveWord(index, 1)}>Ниже</Button>
-          <Button type="button" disabled={saving} onClick={() => {
-            const next = words.filter((item) => item._id !== word._id)
-            setWords(next)
-            onWordsChange(next)
-            setSaved(false)
-          }}>Убрать из сессии</Button>
-        </Box>
-      ))}
-      <Typography>Добавить из словаря</Typography>
-      {otherWords.length === 0 && <Typography>Нет других слов</Typography>}
-      {otherWords.map((word) => (
-        <Box key={word._id}>
-          <Typography>{word.original} — {word.translation}</Typography>
-          <Button type="button" disabled={saving} onClick={() => {
-            const next = [...words, word]
-            setWords(next)
-            onWordsChange(next)
-            setSaved(false)
-          }}>Добавить</Button>
+          <Button type="button" disabled={saving} onClick={() => { void removeWord(word._id) }}>Убрать из сессии</Button>
         </Box>
       ))}
       {error && <Typography color="error" role="alert">{error}</Typography>}

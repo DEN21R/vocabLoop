@@ -19,7 +19,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import ramImage from '../../../shared/assets/ram.png'
 import { getWords, WordCard, type IWord } from '../../../entities/word'
 import { useEffect, useRef, useState } from 'react'
-import { getSessions } from '../../../entities/listening-session'
+import { getSessions, type ListeningSession } from '../../../entities/listening-session'
 import AddWordForm from '../../../features/add-word/'
 import { DeleteWordButton } from '../../../features/delete-word'
 import {
@@ -59,6 +59,7 @@ function HomePage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [sessionWordIds, setSessionWordIds] = useState<Set<string> | null>(null)
+  const [sessions, setSessions] = useState<ListeningSession[]>([])
   const [sessionsError, setSessionsError] = useState('')
   const request = useRef<AbortController | null>(null)
   const [selectedWordIds, setSelectedWordIds] = useState<string[]>([])
@@ -139,10 +140,12 @@ function HomePage() {
     let cancelled = false
     getSessions()
       .then(({ sessions }) => {
-        if (!cancelled)
+        if (!cancelled) {
+          setSessions(sessions)
           setSessionWordIds(
             new Set(sessions.flatMap((session) => session.words)),
           )
+        }
       })
       .catch(() => {
         if (!cancelled)
@@ -270,13 +273,18 @@ function HomePage() {
                 Найти остальные слова можно через поиск или кнопку «Загрузить ещё».
               </Typography>
               <Divider sx={{ my: 2, borderColor: '#e7c4a7' }} />
-              <Typography variant="h6" sx={{ mb: 1, color: '#895a39' }}>2. Создайте сессию</Typography>
+              <Typography variant="h6" sx={{ mb: 1, color: '#895a39' }}>2. Создайте или дополните сессию</Typography>
               <Typography sx={{ mb: 1 }}>
-                Введите «Название сессии» и нажмите «Создать сессию из выбранных слов».
-                Для создания нужны название и хотя бы одно выбранное слово.
+                В поле «Сессия» оставьте «Создать новую», введите название и нажмите
+                «Создать сессию из выбранных слов». Нужно выбрать хотя бы одно слово.
+              </Typography>
+              <Typography sx={{ mb: 1 }}>
+                Чтобы дополнить существующую сессию, выберите её в том же списке и нажмите
+                «Добавить выбранные слова в сессию». Слова добавятся в конец в порядке выбора,
+                прежний порядок сохранится. Добавление слов выполняется на странице «Все слова».
               </Typography>
               <Typography>
-                После создания откроется страница сессии. Нажмите «Подготовить аудио»,
+                После сохранения откроется страница сессии. Нажмите «Подготовить аудио»,
                 дождитесь окончания подготовки и нажмите ▶ в плеере.
               </Typography>
             </DialogContent>
@@ -284,7 +292,7 @@ function HomePage() {
           <Dialog open={open} onClose={handleClickClose}>
             <AddWordForm onCreated={handleWordCreated} />
           </Dialog>
-          <CreateSessionForm wordIds={selectedWordIds} />
+          <CreateSessionForm wordIds={selectedWordIds} sessions={sessions} />
         </Box>
       )}
 

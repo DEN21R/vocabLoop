@@ -17,7 +17,7 @@ import {
   getSession,
   type ListeningSession,
 } from '../../../entities/listening-session'
-import { getWords, type IWord } from '../../../entities/word'
+import type { IWord } from '../../../entities/word'
 import { EditSessionForm } from '../../../features/edit-listening-session'
 import { SessionPlayer } from '../../../features/play-listening-session'
 
@@ -26,7 +26,6 @@ export default function ListeningSessionPage() {
   const [session, setSession] = useState<
     (Omit<ListeningSession, 'words'> & { words: IWord[] }) | null
   >(null)
-  const [words, setWords] = useState<IWord[]>([])
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
     'loading',
   )
@@ -40,13 +39,9 @@ export default function ListeningSessionPage() {
       setStatus('loading')
       try {
         if (!id) throw new Error('Нет ID сессии')
-        const [sessionResult, wordsResult] = await Promise.all([
-          getSession<IWord>(id),
-          getWords(),
-        ])
+        const sessionResult = await getSession<IWord>(id)
         if (cancelled) return
         setSession(sessionResult.session)
-        setWords(wordsResult.words)
         setStatus('success')
       } catch {
         if (!cancelled) setStatus('error')
@@ -81,7 +76,7 @@ export default function ListeningSessionPage() {
           mb: 2,
         }}
       >
-        <Typography variant="h5">Редактирование сессии</Typography>
+        <Typography variant="h5">Настройка сессии</Typography>
         <Tooltip title="Подсказки по сессии">
           <IconButton
             onClick={() => setHelpOpen(true)}
@@ -147,7 +142,14 @@ export default function ListeningSessionPage() {
             Изменения и сохранение
           </Typography>
           <Typography>
-            Состав и порядок меняются в плеере сразу. Для записи в базу нажмите
+            Новые слова добавляйте на странице «Все слова»: отметьте нужные слова,
+            выберите эту сессию в поле «Сессия» и нажмите «Добавить выбранные слова в сессию».
+            Они добавятся в конец, сохранив прежний порядок.
+          </Typography>
+          <Typography sx={{ mt: 1 }}>
+            Удаление слова из сессии сохраняется сразу. Если слово больше не входит
+            ни в одну сессию, оно снова доступно для выбора на странице «Все слова».
+            Для сохранения названия, интервала и порядка нажмите
             «Сохранить изменения». После изменения состава, порядка или
             сохранения интервала подготовьте аудиотрек заново.
           </Typography>
@@ -185,7 +187,6 @@ export default function ListeningSessionPage() {
           />
           <EditSessionForm
             session={session}
-            availableWords={words}
             onWordsChange={(next) =>
               setSession((current) =>
                 current ? { ...current, words: next } : current,
