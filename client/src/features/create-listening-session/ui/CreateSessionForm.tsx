@@ -18,7 +18,11 @@ export default function CreateSessionForm({ wordIds }: { wordIds: string[] }) {
     setError('')
     setSaving(true)
     try {
-      const { session } = await createSession({ name: name.trim(), words: wordIds, intervalSeconds: 3 })
+      const { session } = await createSession({
+        name: name.trim(),
+        words: wordIds,
+        intervalSeconds: 3,
+      })
       navigate(`/user/sessions/${session._id}`)
     } catch {
       setError('Не удалось создать сессию. Попробуйте ещё раз.')
@@ -28,8 +32,14 @@ export default function CreateSessionForm({ wordIds }: { wordIds: string[] }) {
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ my: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Typography>Выбрано слов: {wordIds.length}. Порядок — по очереди выбора.</Typography>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ my: 2, display: 'flex', flexDirection: 'column', gap: 1 }}
+    >
+      <Typography>
+        Выбрано слов: {wordIds.length}. Порядок — по очереди выбора.
+      </Typography>
       <TextField
         label="Название сессии"
         value={name}
@@ -38,10 +48,24 @@ export default function CreateSessionForm({ wordIds }: { wordIds: string[] }) {
         disabled={saving}
         slotProps={{ htmlInput: { maxLength: 100 } }}
       />
-      <Button type="submit" variant="outlined" disabled={saving || wordIds.length === 0}>
+      <Button
+        sx={{
+          color: '#f78811',
+          border: '2px #f78811 solid',
+          borderRadius: '12px',
+          mt: 4,
+        }}
+        type="submit"
+        variant="outlined"
+        disabled={saving || wordIds.length === 0}
+      >
         {saving ? 'Сохраняем…' : 'Создать сессию из выбранных слов'}
       </Button>
-      {error && <Typography color="error" role="alert">{error}</Typography>}
+      {error && (
+        <Typography color="error" role="alert">
+          {error}
+        </Typography>
+      )}
     </Box>
   )
 }
