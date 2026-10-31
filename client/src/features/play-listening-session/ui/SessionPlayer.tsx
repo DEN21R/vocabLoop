@@ -38,12 +38,6 @@ export default function SessionPlayer({
         intervalSeconds={intervalSeconds}
         voices={voices}
       />
-      <Typography variant="body2">
-        Сначала подготовьте аудио с открытым экраном, затем нажмите ▶ в плеере.
-        Своя запись перевода имеет приоритет. Пауза сохраняет точное место
-        воспроизведения. Готовая озвучка сохраняется в браузере; после очистки
-        данных сайта её потребуется подготовить заново.
-      </Typography>
       <Typography variant="caption">
         <a
           href={`${import.meta.env.BASE_URL}licenses/piper/index.html`}

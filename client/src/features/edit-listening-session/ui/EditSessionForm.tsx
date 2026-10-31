@@ -109,7 +109,6 @@ export default function EditSessionForm({ session, availableWords, onWordsChange
           }}>Добавить</Button>
         </Box>
       ))}
-      <Typography variant="body2">Состав и порядок меняются в плеере сразу. Для записи в базу нажмите «Сохранить изменения». После изменения состава, порядка или сохранения интервала подготовьте аудиотрек заново.</Typography>
       {error && <Typography color="error" role="alert">{error}</Typography>}
       {saved && <Typography role="status">Сессия сохранена</Typography>}
       <Button type="submit" variant="outlined" disabled={saving}>{saving ? 'Сохраняем…' : 'Сохранить изменения'}</Button>
