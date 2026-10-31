@@ -35,11 +35,17 @@ export default function CreateSessionForm({ wordIds }: { wordIds: string[] }) {
     <Box
       component="form"
       onSubmit={handleSubmit}
-      sx={{ my: 2, display: 'flex', flexDirection: 'column', gap: 1 }}
+      sx={{
+        my: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+        border: '2px #895a39 solid',
+        borderRadius: '12px',
+        p: 2,
+      }}
     >
-      <Typography>
-        Выбрано слов: {wordIds.length}. Порядок — по очереди выбора.
-      </Typography>
+      <Typography>Выбрано слов: {wordIds.length}.</Typography>
       <TextField
         label="Название сессии"
         value={name}
