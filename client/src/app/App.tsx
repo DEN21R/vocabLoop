@@ -22,7 +22,7 @@ function App() {
         maxWidth: '1440px',
         width: '100%',
         mx: 'auto',
-        backgroundColor: '#fbefe4',
+        backgroundColor: '#F9EDE5',
       }}
     >
       <Routes>
@@ -40,7 +40,18 @@ function App() {
                   <Navigation />
                 </Box>
 
-                <Box component="main" sx={{ flex: 1, minWidth: 0, p: 3, pb: { xs: 'calc(80px + env(safe-area-inset-bottom))', sm: 3 } }}>
+                <Box
+                  component="main"
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    p: 3,
+                    pb: {
+                      xs: 'calc(80px + env(safe-area-inset-bottom))',
+                      sm: 3,
+                    },
+                  }}
+                >
                   <Outlet />
                 </Box>
               </Box>
