@@ -102,11 +102,11 @@ function playerEnvironment(build) {
   const revoked = []
   let src = ''
   const audio = {
-    currentTime: 0, loop: false, calls: 0,
+    currentTime: 0, loop: false, calls: 0, paused: true,
     get src() { return src }, set src(value) { src = value },
     addEventListener: (type, fn) => events.set(type, fn), removeEventListener: (type) => events.delete(type),
-    play() { this.calls++; events.get('play')?.(); return Promise.resolve() },
-    pause() { events.get('pause')?.() }, load() {}, removeAttribute() { src = '' },
+    play() { this.calls++; this.paused = false; events.get('play')?.(); return Promise.resolve() },
+    pause() { this.paused = true; events.get('pause')?.() }, load() {}, removeAttribute() { src = '' },
   }
   let ref = 0
   const { useSessionPlayer: createPlayer } = load('useSessionPlayer.ts', {
@@ -127,18 +127,20 @@ test('prepared track uses HTML audio.loop; pause resumes exactly and stop rewind
   const env = playerEnvironment(async () => { builds++; return track })
   await env.player.prepare()
   assert.equal(env.audio.calls, 0, 'preparation must not autoplay outside a gesture')
-  const playing = env.player.play()
+  const playing = env.audio.play()
   assert.equal(env.audio.calls, 1, 'play is invoked synchronously from the click')
   await playing
+  assert(env.states.includes('playing'))
   assert.equal(env.audio.loop, true)
   env.audio.currentTime = 1.5
-  env.player.pause()
+  env.audio.pause()
+  assert(env.states.includes('paused'))
   assert.equal(env.audio.currentTime, 1.5)
-  await env.player.play()
+  await env.audio.play()
   assert.equal(env.audio.currentTime, 1.5)
   env.player.stop()
   assert.equal(env.audio.currentTime, 0)
-  await env.player.play()
+  await env.audio.play()
   assert.equal(builds, 1)
   env.dispose()
   assert.deepEqual(env.revoked, ['blob:track'])

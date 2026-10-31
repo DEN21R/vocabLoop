@@ -16,11 +16,9 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   const preparation = useRef<AbortController | null>(null)
   const track = useRef<{ url: string; cues: SessionCue[] } | null>(null)
   const statusRef = useRef<Status>('stopped')
-  const run = useRef(0)
 
   function changeStatus(next: Status) { statusRef.current = next; setStatus(next) }
   function cancelPreparation() {
-    run.current++
     preparation.current?.abort()
     preparation.current = null
   }
@@ -51,7 +49,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       track.current = { url, cues: result.cues }
       audioRef.current!.src = url
       audioRef.current!.load()
-      setReady(true); changeStatus('ready'); setMessage('Аудио готово. Нажмите «Запустить».')
+      setReady(true); changeStatus('ready'); setMessage('Аудио готово. Нажмите ▶ в плеере.')
     } catch (cause) {
       if (preparation.current !== controller) return
       changeStatus('stopped'); setMessage('')
@@ -61,25 +59,6 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     }
   }
 
-  async function play() {
-    if (!track.current || statusRef.current === 'playing') return
-    const current = ++run.current
-    changeStatus('playing'); setError(''); setMessage('')
-    try { await audioRef.current!.play() }
-    catch (cause) {
-      if (current !== run.current) return
-      changeStatus('paused')
-      setError(`Не удалось запустить аудио. Нажмите «Продолжить». ${cause instanceof Error ? cause.message : String(cause)}`)
-    }
-  }
-
-  function pause() {
-    if (statusRef.current !== 'playing') return
-    run.current++
-    changeStatus('paused')
-    audioRef.current?.pause()
-  }
-
   useEffect(() => {
     const audio = audioRef.current!
     audio.loop = true
@@ -87,10 +66,11 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       const cue = track.current && sessionPosition(track.current.cues, audio.currentTime)
       if (cue) setProgress((previous) => previous.index === cue.index && previous.phase === cue.phase ? previous : { index: cue.index, phase: cue.phase })
     }
-    const playing = () => { if (!audio.paused) changeStatus('playing') }
+    const playing = () => {
+      if (!audio.paused) { changeStatus('playing'); setError(''); setMessage('') }
+    }
     const paused = () => { if (audio.paused && statusRef.current === 'playing') changeStatus('paused') }
     const failed = () => {
-      run.current++
       audio.pause(); changeStatus('stopped')
       setError(`Не удалось воспроизвести аудиотрек (${audio.error?.message || audio.error?.code || 'ошибка аудио'}).`)
       releaseTrack(); setReady(false)
@@ -111,5 +91,5 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     }
   }, [])
 
-  return { status, progress, error, message, ready, audioRef, prepare, play, pause, stop }
+  return { status, progress, error, message, ready, audioRef, prepare, stop }
 }
