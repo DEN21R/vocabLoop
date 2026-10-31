@@ -1,6 +1,10 @@
 import { Box, Typography, Button, Menu, MenuItem } from '@mui/material'
 import { useState } from 'react'
-import { PIPER_VOICES, type PiperLanguage, type PiperSelections } from '../../../shared/lib/tts/piper'
+import {
+  PIPER_VOICES,
+  type PiperLanguage,
+  type PiperSelections,
+} from '../../../shared/lib/tts/piper'
 
 type VoiceSettingsProps = {
   selectedVoices: PiperSelections
@@ -40,7 +44,8 @@ export function VoiceSettings({
     closeMenu()
   }
 
-  const filteredVoices = selectedLanguage === null ? [] : PIPER_VOICES[selectedLanguage].voices
+  const filteredVoices =
+    selectedLanguage === null ? [] : PIPER_VOICES[selectedLanguage].voices
 
   return (
     <Box
@@ -58,7 +63,7 @@ export function VoiceSettings({
 
       <Button
         sx={{
-          color: '#895a39',
+          color: '#f78811',
         }}
         onClick={(event) => openMenu(event.currentTarget)}
       >
