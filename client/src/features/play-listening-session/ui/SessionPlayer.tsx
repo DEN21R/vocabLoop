@@ -74,6 +74,12 @@ function Playback({
         {status === 'playing' && progress.phase === 'waiting' && ' · Интервал'}
       </Typography>
       <Button
+        sx={{
+          color: '#f78811',
+          border: '2px #f78811 solid',
+          borderRadius: '12px',
+          mt: 2,
+        }}
         onClick={() => {
           void prepare()
         }}
@@ -128,13 +134,24 @@ function Playback({
               </MenuItem>
             ))}
           </TextField>
-          <Button onClick={stop} disabled={status === 'stopped'}>
+          <Button
+            sx={{
+              color: '#f78811',
+              border: '2px #f78811 solid',
+              borderRadius: '12px',
+            }}
+            onClick={stop}
+            disabled={status === 'stopped'}
+          >
             Стоп
           </Button>
         </Box>
       )}
       {message && (
-        <Typography role="status" variant="body2">
+        <Typography
+          role="status"
+          sx={{ color: '#5d2c07', fontWeight: 'bold', fontSize: '1rem' }}
+        >
           {message}
         </Typography>
       )}
