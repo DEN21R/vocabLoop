@@ -52,6 +52,9 @@ export function VoiceSettings({
       sx={{
         border: '2px #895a39 solid',
         borderRadius: '12px',
+        bgcolor: '#fcf5f0',
+        color: '#5d2c07',
+        p: 2,
         mb: 2,
         display: 'flex',
         flexDirection: 'column',
@@ -64,13 +67,34 @@ export function VoiceSettings({
       <Button
         sx={{
           color: '#f78811',
+          border: '2px solid #f78811',
+          borderRadius: '12px',
+          mt: 1,
+          '&:hover, &.Mui-focusVisible': { bgcolor: '#fff0df' },
         }}
         onClick={(event) => openMenu(event.currentTarget)}
       >
         Выбрать голос
       </Button>
 
-      <Menu anchorEl={anchorEl} open={anchorEl !== null} onClose={closeMenu}>
+      <Menu
+        anchorEl={anchorEl}
+        open={anchorEl !== null}
+        onClose={closeMenu}
+        slotProps={{ paper: { sx: {
+          bgcolor: '#fcf5f0',
+          color: '#5d2c07',
+          border: '1px solid #e7c4a7',
+          borderRadius: 3,
+          maxWidth: 'calc(100vw - 32px)',
+          '& .MuiMenuItem-root': {
+            whiteSpace: 'normal',
+            '&:hover, &.Mui-focusVisible': { bgcolor: '#fff0df' },
+            '&.Mui-selected': { bgcolor: '#ffe0b2', color: '#a64d00' },
+            '&.Mui-selected:hover, &.Mui-selected.Mui-focusVisible': { bgcolor: '#ffd19a' },
+          },
+        } } }}
+      >
         {selectedLanguage === null &&
           languages.map((language) => (
             <MenuItem
