@@ -38,15 +38,6 @@ export default function SessionPlayer({
         intervalSeconds={intervalSeconds}
         voices={voices}
       />
-      <Typography variant="caption">
-        <a
-          href={`${import.meta.env.BASE_URL}licenses/piper/index.html`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Лицензии и исходники Piper
-        </a>
-      </Typography>
     </Box>
   )
 }
