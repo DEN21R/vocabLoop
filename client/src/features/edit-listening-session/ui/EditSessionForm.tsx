@@ -10,7 +10,11 @@ interface Props {
   onIntervalSaved: (intervalSeconds: number) => void
 }
 
-export default function EditSessionForm({ session, onWordsChange, onIntervalSaved }: Props) {
+export default function EditSessionForm({
+  session,
+  onWordsChange,
+  onIntervalSaved,
+}: Props) {
   const [name, setName] = useState(session.name)
   const [interval, setInterval] = useState(String(session.intervalSeconds))
   const [words, setWords] = useState(session.words)
@@ -55,7 +59,12 @@ export default function EditSessionForm({ session, onWordsChange, onIntervalSave
       setError('Название должно содержать от 1 до 100 символов')
       return
     }
-    if (interval === '' || !Number.isInteger(intervalSeconds) || intervalSeconds < 0 || intervalSeconds > 60) {
+    if (
+      interval === '' ||
+      !Number.isInteger(intervalSeconds) ||
+      intervalSeconds < 0 ||
+      intervalSeconds > 60
+    ) {
       setError('Интервал должен быть целым числом от 0 до 60')
       return
     }
@@ -70,20 +79,29 @@ export default function EditSessionForm({ session, onWordsChange, onIntervalSave
       onIntervalSaved(result.session.intervalSeconds)
       setSaved(true)
     } catch {
-      setError('Не удалось сохранить. Возможно, одно из слов удалено из словаря. Обновите страницу или повторите попытку.')
+      setError(
+        'Не удалось сохранить. Возможно, одно из слов удалено из словаря. Обновите страницу или повторите попытку.',
+      )
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+    >
       <TextField
         label="Название сессии"
         value={name}
         required
         disabled={saving}
-        onChange={(event) => { setName(event.target.value); setSaved(false) }}
+        onChange={(event) => {
+          setName(event.target.value)
+          setSaved(false)
+        }}
         slotProps={{ htmlInput: { maxLength: 100 } }}
       />
       <TextField
@@ -92,22 +110,84 @@ export default function EditSessionForm({ session, onWordsChange, onIntervalSave
         value={interval}
         required
         disabled={saving}
-        onChange={(event) => { setInterval(event.target.value); setSaved(false) }}
+        onChange={(event) => {
+          setInterval(event.target.value)
+          setSaved(false)
+        }}
         slotProps={{ htmlInput: { min: 0, max: 60, step: 1 } }}
       />
       <Typography>Слова в порядке воспроизведения</Typography>
-      {words.length === 0 && <Typography>Сессия пустая. Добавить слова можно на странице «Все слова», выбрав эту сессию.</Typography>}
+      {words.length === 0 && (
+        <Typography>
+          Сессия пустая. Добавить слова можно на странице «Все слова», выбрав
+          эту сессию.
+        </Typography>
+      )}
       {words.map((word, index) => (
         <Box key={word._id}>
-          <Typography>{index + 1}. {word.original} — {word.translation}</Typography>
-          <Button type="button" disabled={saving || index === 0} onClick={() => moveWord(index, -1)}>Выше</Button>
-          <Button type="button" disabled={saving || index === words.length - 1} onClick={() => moveWord(index, 1)}>Ниже</Button>
-          <Button type="button" disabled={saving} onClick={() => { void removeWord(word._id) }}>Убрать из сессии</Button>
+          <Typography>
+            {index + 1}. {word.original} — {word.translation}
+          </Typography>
+          <Button
+            sx={{
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              fontSize: '0.6rem',
+              color: '#f78811',
+              border: '2px #f78811 solid',
+              borderRadius: '12px',
+            }}
+            type="button"
+            disabled={saving || index === 0}
+            onClick={() => moveWord(index, -1)}
+          >
+            Выше
+          </Button>
+          <Button
+            sx={{
+              ml: 1,
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              fontSize: '0.6rem',
+              color: '#f78811',
+              border: '2px #f78811 solid',
+              borderRadius: '12px',
+            }}
+            type="button"
+            disabled={saving || index === words.length - 1}
+            onClick={() => moveWord(index, 1)}
+          >
+            Ниже
+          </Button>
+          <Button
+            sx={{
+              ml: 1,
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              fontSize: '0.6rem',
+              color: '#f78811',
+              border: '2px #f78811 solid',
+              borderRadius: '12px',
+            }}
+            type="button"
+            disabled={saving}
+            onClick={() => {
+              void removeWord(word._id)
+            }}
+          >
+            Убрать из сессии
+          </Button>
         </Box>
       ))}
-      {error && <Typography color="error" role="alert">{error}</Typography>}
+      {error && (
+        <Typography color="error" role="alert">
+          {error}
+        </Typography>
+      )}
       {saved && <Typography role="status">Сессия сохранена</Typography>}
-      <Button type="submit" variant="outlined" disabled={saving}>{saving ? 'Сохраняем…' : 'Сохранить изменения'}</Button>
+      <Button type="submit" variant="outlined" disabled={saving}>
+        {saving ? 'Сохраняем…' : 'Сохранить изменения'}
+      </Button>
     </Box>
   )
 }
