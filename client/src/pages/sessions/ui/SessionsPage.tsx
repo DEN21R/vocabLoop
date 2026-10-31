@@ -11,8 +11,16 @@ import { getMe } from '../../../shared/api/auth'
 import { IconButton } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import backHome from '../../../shared/assets/backHome.png'
+import ramImage from '../../../shared/assets/ramSessi.png'
 
 function SessionsPage() {
+  const [showRam] = useState(() => {
+    try {
+      return sessionStorage.getItem('sessionsRamShown') !== '1'
+    } catch {
+      return false
+    }
+  })
   const [sessions, setSessions] = useState<ListeningSession[]>([])
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
     'loading',
@@ -88,9 +96,46 @@ function SessionsPage() {
         mx: '-24px',
         mt: '-24px',
         minHeight: '100vh',
+        isolation: 'isolate',
       }}
     >
-      <Box sx={{ p: 3 }}>
+      {showRam && (
+        <Box
+          component="img"
+          src={ramImage}
+          alt=""
+          aria-hidden="true"
+          onAnimationStart={() => {
+            try {
+              sessionStorage.setItem('sessionsRamShown', '1')
+            } catch {
+              /* Хранилище может быть недоступно в браузере. */
+            }
+          }}
+          sx={{
+            position: 'fixed',
+            left: { xs: 16, sm: 'calc(250px + 16px)' },
+            right: 16,
+            bottom: {
+              xs: 'calc(80px + env(safe-area-inset-bottom))',
+              sm: '8vh',
+            },
+            mx: 'auto',
+            width: { xs: 'calc(100% - 32px)', sm: 'calc(100% - 282px)' },
+            maxWidth: 360,
+            maxHeight: '25dvh',
+            objectFit: 'contain',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'sessionsRamFade 9s ease-in-out 2s both',
+            '@keyframes sessionsRamFade': {
+              '0%, 100%': { opacity: 0 },
+              '25%, 75%': { opacity: 1 },
+            },
+          }}
+        />
+      )}
+      <Box sx={{ p: 3, position: 'relative', zIndex: 1 }}>
         <Typography variant="h5">Привет {userName} 👋!</Typography>
         <Typography sx={{ mt: 1 }}>
           С возвращением, продолжаем идти к цели😊.
