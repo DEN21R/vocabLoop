@@ -20,6 +20,9 @@ function Login() {
       const result = await login(formData)
 
       localStorage.setItem('token', result.token)
+      try {
+        sessionStorage.removeItem('sessionsRamShown')
+      } catch { /* Показ картинки необязателен, вход продолжается. */ }
 
       navigate('/user/sessions')
     } catch {
