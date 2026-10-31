@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material'
 import type { IWord } from '../../../entities/word'
 import {
@@ -10,16 +10,15 @@ import { useSessionPlayer } from '../model/useSessionPlayer'
 export default function SessionPlayer({
   words,
   intervalSeconds,
+  onActiveWordChange,
 }: {
   words: IWord[]
   intervalSeconds: number
+  onActiveWordChange: (wordId: string | null) => void
 }) {
   const [voices] = useState(loadPiperSelections)
   return (
     <Box sx={{ mb: 3 }}>
-      <Typography>
-        Прослушивание по кругу. Интервал: {intervalSeconds} сек.
-      </Typography>
       <Playback
         key={JSON.stringify([
           words.map((word) => [
@@ -37,6 +36,7 @@ export default function SessionPlayer({
         words={words}
         intervalSeconds={intervalSeconds}
         voices={voices}
+        onActiveWordChange={onActiveWordChange}
       />
     </Box>
   )
@@ -46,33 +46,26 @@ function Playback({
   words,
   intervalSeconds,
   voices,
+  onActiveWordChange,
 }: {
   words: IWord[]
   intervalSeconds: number
   voices: PiperSelections
+  onActiveWordChange: (wordId: string | null) => void
 }) {
   const { status, progress, error, message, ready, audioRef, prepare, stop } =
     useSessionPlayer(words, intervalSeconds, voices)
   const [speed, setSpeed] = useState(1)
   const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
-  const word = words[progress.index]
+  const activeWordId = status === 'playing' ? words[progress.index]?._id ?? null : null
+
+  useEffect(() => {
+    onActiveWordChange(activeWordId)
+    return () => onActiveWordChange(null)
+  }, [activeWordId, onActiveWordChange])
+
   return (
     <>
-      <Typography>
-        {status === 'preparing' ?
-          'Подготовка'
-        : status === 'playing' ?
-          'Воспроизводится'
-        : status === 'paused' ?
-          'На паузе'
-        : status === 'ready' ?
-          'Готово'
-        : 'Остановлено'}
-        {word ?
-          ` · ${progress.index + 1} / ${words.length}: ${word.original} — ${word.translation}`
-        : ' · Добавьте слова для прослушивания.'}
-        {status === 'playing' && progress.phase === 'waiting' && ' · Интервал'}
-      </Typography>
       <Button
         sx={{
           color: '#f78811',
@@ -91,7 +84,6 @@ function Playback({
           'Аудио подготовлено'
         : 'Подготовить аудио'}
       </Button>
-      {status === 'preparing' && <Button onClick={stop}>Отменить</Button>}
       <audio
         ref={audioRef}
         controls

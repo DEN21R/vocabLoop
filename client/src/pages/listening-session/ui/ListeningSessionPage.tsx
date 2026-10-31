@@ -30,6 +30,7 @@ export default function ListeningSessionPage() {
     'loading',
   )
   const [attempt, setAttempt] = useState(0)
+  const [activeWordId, setActiveWordId] = useState<string | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const closeHelp = () => setHelpOpen(false)
 
@@ -184,9 +185,11 @@ export default function ListeningSessionPage() {
           <SessionPlayer
             words={session.words}
             intervalSeconds={session.intervalSeconds}
+            onActiveWordChange={setActiveWordId}
           />
           <EditSessionForm
             session={session}
+            activeWordId={activeWordId}
             onWordsChange={(next) =>
               setSession((current) =>
                 current ? { ...current, words: next } : current,

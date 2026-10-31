@@ -6,12 +6,14 @@ import { updateSession } from '../api/updateSession'
 
 interface Props {
   session: Omit<ListeningSession, 'words'> & { words: IWord[] }
+  activeWordId: string | null
   onWordsChange: (words: IWord[]) => void
   onIntervalSaved: (intervalSeconds: number) => void
 }
 
 export default function EditSessionForm({
   session,
+  activeWordId,
   onWordsChange,
   onIntervalSaved,
 }: Props) {
@@ -124,8 +126,16 @@ export default function EditSessionForm({
         </Typography>
       )}
       {words.map((word, index) => (
-        <Box key={word._id}>
-          <Typography>
+        <Box
+          key={word._id}
+          aria-current={activeWordId === word._id ? 'true' : undefined}
+          sx={{
+            p: 1,
+            borderRadius: 2,
+            bgcolor: activeWordId === word._id ? '#ffe0b2' : 'transparent',
+          }}
+        >
+          <Typography sx={{ mb: 1 }}>
             {index + 1}. {word.original} — {word.translation}
           </Typography>
           <Button
