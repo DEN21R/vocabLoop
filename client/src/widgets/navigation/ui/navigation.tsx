@@ -50,9 +50,17 @@ function Navigation() {
             aria-current={activePath === item.path ? 'page' : undefined}
             aria-label={item.label}
             title={item.label}
-            sx={{ justifyContent: { xs: 'center', sm: 'flex-start' }, minHeight: 56, px: { xs: 1, sm: 2 } }}
+            sx={{
+              justifyContent: { xs: 'center', sm: 'flex-start' },
+              minHeight: 56,
+              px: { xs: 1, sm: 2 },
+              color: '#895a39',
+              '&:hover, &.Mui-focusVisible': { bgcolor: '#fff0df' },
+              '&.Mui-selected': { bgcolor: '#ffe0b2', color: '#c96608' },
+              '&.Mui-selected:hover, &.Mui-selected.Mui-focusVisible': { bgcolor: '#ffd19a' },
+            }}
           >
-            <ListItemIcon sx={{ display: { xs: 'flex', sm: 'none' }, minWidth: 0, color: activePath === item.path ? 'primary.main' : 'inherit' }}>
+            <ListItemIcon sx={{ display: { xs: 'flex', sm: 'none' }, minWidth: 0, color: 'inherit' }}>
               <item.icon />
             </ListItemIcon>
             <ListItemText sx={{ display: { xs: 'none', sm: 'block' } }}>{item.label}</ListItemText>
