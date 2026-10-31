@@ -195,7 +195,17 @@ export default function EditSessionForm({
         </Typography>
       )}
       {saved && <Typography role="status">Сессия сохранена</Typography>}
-      <Button type="submit" variant="outlined" disabled={saving}>
+      <Button
+        type="submit"
+        variant="outlined"
+        disabled={saving}
+        sx={{
+          color: '#f78811',
+          border: '2px #f78811 solid',
+          borderRadius: '12px',
+          '&:hover': { bgcolor: '#fff0df', borderColor: '#f78811' },
+        }}
+      >
         {saving ? 'Сохраняем…' : 'Сохранить изменения'}
       </Button>
     </Box>
