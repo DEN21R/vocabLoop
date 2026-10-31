@@ -289,7 +289,22 @@ function HomePage() {
               </Typography>
             </DialogContent>
           </Dialog>
-          <Dialog open={open} onClose={handleClickClose}>
+          <Dialog
+            open={open}
+            onClose={handleClickClose}
+            fullWidth
+            maxWidth="xs"
+            sx={{ '& .MuiDialog-container': { alignItems: 'flex-start' } }}
+            slotProps={{ paper: { sx: {
+              mt: 'max(16px, env(safe-area-inset-top))',
+              mx: 2,
+              width: 'calc(100% - 32px)',
+              bgcolor: '#fcf5f0',
+              color: '#5d2c07',
+              border: '1px solid #e7c4a7',
+              borderRadius: 3,
+            } } }}
+          >
             <AddWordForm onCreated={handleWordCreated} />
           </Dialog>
           <CreateSessionForm wordIds={selectedWordIds} sessions={sessions} />
