@@ -7,9 +7,31 @@ import {
   TextField,
 } from '@mui/material'
 import MenuItem from '@mui/material/MenuItem'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { useState, type FormEvent } from 'react'
 import { addWord } from '../api/addWord'
 import type { IWord } from '../../../entities/word'
+import ramImage from '../../../shared/assets/ramNewWord.png'
+
+const formTheme = createTheme({
+  palette: {
+    primary: { main: '#f78811', contrastText: '#5d2c07' },
+    text: { primary: '#5d2c07', secondary: '#895a39' },
+    background: { paper: '#fcf5f0' },
+  },
+  components: {
+    MuiInputBase: { styleOverrides: { input: { fontSize: 16 } } },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          border: '2px solid #f78811',
+          '&:hover': { backgroundColor: '#fff0df' },
+        },
+      },
+    },
+  },
+})
 
 const languagesArray = [
   {
@@ -71,8 +93,40 @@ function AddWordForm({ onCreated }: AddWordProps) {
   }
 
   return (
-    <Box>
-      <DialogTitle>Новое слово</DialogTitle>
+    <ThemeProvider theme={formTheme}>
+      <DialogTitle
+        sx={{
+          position: 'relative',
+          pr: '30%',
+          minHeight: 'clamp(88px, 18dvh, 132px)',
+          boxSizing: 'border-box',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        Новое слово
+        <Box
+          component="img"
+          src={ramImage}
+          alt=""
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            top: 25,
+            right: -9,
+            width: '70%',
+            height: 'calc(100% - 16px)',
+            objectFit: 'contain',
+            transform: 'scale(1.15)',
+            pointerEvents: 'none',
+            animation: 'newWordRamFade 18s ease-in-out 0.5s both',
+            '@keyframes newWordRamFade': {
+              '0%, 100%': { opacity: 0 },
+              '18%, 82%': { opacity: 1 },
+            },
+          }}
+        />
+      </DialogTitle>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -124,7 +178,7 @@ function AddWordForm({ onCreated }: AddWordProps) {
           </Box>
         </form>
       </DialogContent>
-    </Box>
+    </ThemeProvider>
   )
 }
 export default AddWordForm
