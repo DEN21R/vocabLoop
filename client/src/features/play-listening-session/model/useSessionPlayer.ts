@@ -15,7 +15,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   const [diagnostics, setDiagnostics] = useState<string[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const preparation = useRef<AbortController | null>(null)
-  const track = useRef<{ url: string; cues: SessionCue[] } | null>(null)
+  const track = useRef<{ audio: Blob; url: string | null; cues: SessionCue[] } | null>(null)
   const statusRef = useRef<Status>('stopped')
   const playerLoadStarted = useRef<number | null>(null)
 
@@ -26,7 +26,8 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       readyState: audio?.readyState, networkState: audio?.networkState,
       duration: audio && Number.isFinite(audio.duration) ? audio.duration : null,
       paused: audio?.paused, hidden: audio?.hidden, preload: audio?.preload,
-      sourceMatchesTrack: !!track.current && audio?.currentSrc === track.current.url,
+      source: audio?.srcObject ? 'srcObject' : 'blob-url',
+      sourceMatchesTrack: !!track.current && (audio?.srcObject === track.current.audio || audio?.currentSrc === track.current.url),
       visibility: document.visibilityState,
       error: audio?.error ? { code: audio.error.code, message: audio.error.message } : null,
     })}`
@@ -38,7 +39,8 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     preparation.current = null
   }
   function releaseTrack() {
-    if (track.current) URL.revokeObjectURL(track.current.url)
+    if (audioRef.current) audioRef.current.srcObject = null
+    if (track.current?.url) URL.revokeObjectURL(track.current.url)
     track.current = null
   }
 
@@ -46,7 +48,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     cancelPreparation()
     changeStatus('stopped')
     audioRef.current?.pause()
-    if (audioRef.current?.src) audioRef.current.currentTime = 0
+    if (audioRef.current && audioRef.current.readyState > 0) audioRef.current.currentTime = 0
     setProgress(START); setMessage(''); setError('')
   }
 
@@ -66,10 +68,17 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       })
       if (preparation.current !== controller) return
       setDiagnostics((previous) => [...previous, `TRACK_BUILT ${JSON.stringify({ ms: Math.round(performance.now() - started), bytes: result.audio.size })}`])
-      const url = URL.createObjectURL(result.audio)
-      track.current = { url, cues: result.cues }
+      const audio = audioRef.current!
+      track.current = { audio: result.audio, url: null, cues: result.cues }
       playerLoadStarted.current = performance.now()
-      audioRef.current!.src = url
+      // Safari accepts a Blob directly; Chrome rejects Blob srcObject values.
+      try { audio.srcObject = result.audio }
+      catch (cause) {
+        if (!(cause instanceof TypeError)) throw cause
+        const url = URL.createObjectURL(result.audio)
+        track.current.url = url
+        audio.src = url
+      }
       setMessage('Загрузка трека в плеер…')
       audioRef.current!.load()
       const snapshot = playerSnapshot('LOAD_CALLED')
@@ -98,7 +107,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       if (cue) setProgress((previous) => previous.index === cue.index && previous.phase === cue.phase ? previous : { index: cue.index, phase: cue.phase })
     }
     const metadataLoaded = () => {
-      if (track.current && audio.currentSrc === track.current.url && statusRef.current === 'preparing' && Number.isFinite(audio.duration) && audio.duration > 0 && !audio.error) {
+      if (track.current && (audio.srcObject === track.current.audio || audio.currentSrc === track.current.url) && statusRef.current === 'preparing' && Number.isFinite(audio.duration) && audio.duration > 0 && !audio.error) {
         setReady(true); changeStatus('ready'); setMessage('Трек подготовлен. Нажмите ▶ в плеере.')
       }
     }
@@ -125,8 +134,9 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       audio.removeEventListener('playing', playing)
       audio.removeEventListener('pause', paused)
       audio.removeEventListener('error', failed)
-      audio.pause(); audio.removeAttribute('src'); audio.load()
+      audio.pause()
       releaseTrack()
+      audio.removeAttribute('src'); audio.load()
     }
   }, [])
 
