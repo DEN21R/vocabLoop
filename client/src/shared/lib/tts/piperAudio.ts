@@ -34,24 +34,66 @@ function synthesize(request: PiperRequest, signal: AbortSignal, status: (message
 export async function getPiperAudio(request: PiperRequest, signal: AbortSignal, status: (message: string) => void): Promise<Blob> {
   const validated = validatePiperRequest(request)
   signal.throwIfAborted()
+  const lookupStarted = performance.now()
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([
     'v1', request.language, validated.choiceId, validated.text,
   ])))
   const key = new URL(`/__piper_audio__/${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')}.wav`, location.origin).href
+  // Temporary diagnostics: compare the same key before and after an app restart.
+  const diagnostic = {
+    run: performance.timeOrigin,
+    origin: location.origin,
+    mode: globalThis.matchMedia?.('(display-mode: standalone)').matches ? 'standalone' : 'browser',
+    language: request.language, voice: validated.choiceId, text: validated.text, key,
+  }
   let cache: Cache
   try { cache = await caches.open('vocabloop-piper-audio-v1') }
-  catch { throw new Error('Браузер не разрешил сохранять озвучку. Разрешите хранение данных сайта и повторите подготовку.') }
-  signal.throwIfAborted()
-  const cached = await cache.match(key)
-  if (cached) {
-    const audio = await cached.blob()
-    const header = new DataView(await audio.slice(0, 44).arrayBuffer())
-    if (audio.size > 44 && header.getUint32(0) === 0x52494646 && header.getUint32(8) === 0x57415645 && header.getUint32(40, true) === audio.size - 44) return audio
-    await cache.delete(key)
+  catch (cause) {
+    console.warn('[Piper cache] ERROR', { ...diagnostic, stage: 'open', ms: Math.round(performance.now() - lookupStarted), error: String(cause) })
+    throw new Error('Браузер не разрешил сохранять озвучку. Разрешите хранение данных сайта и повторите подготовку.')
   }
-  const audio = await synthesize({ ...request, text: validated.text }, signal, status)
   signal.throwIfAborted()
-  try { await cache.put(key, new Response(audio, { headers: { 'Content-Type': 'audio/wav' } })) }
-  catch { throw new Error('Не удалось сохранить озвучку: недостаточно места в хранилище браузера. Освободите место и повторите подготовку.') }
+  let cached: Response | undefined
+  try { cached = await cache.match(key) }
+  catch (cause) {
+    console.warn('[Piper cache] ERROR', { ...diagnostic, stage: 'match', ms: Math.round(performance.now() - lookupStarted), error: String(cause) })
+    throw cause
+  }
+  const lookupMs = Math.round(performance.now() - lookupStarted)
+  if (cached) {
+    const readStarted = performance.now()
+    try {
+      const audio = await cached.blob()
+      const header = new DataView(await audio.slice(0, 44).arrayBuffer())
+      const valid = audio.size > 44 && header.getUint32(0) === 0x52494646 && header.getUint32(8) === 0x57415645 && header.getUint32(40, true) === audio.size - 44
+      console.info(`[Piper cache] ${valid ? 'HIT' : 'MISS'}`, {
+        ...diagnostic, reason: valid ? 'valid-wav' : 'invalid-wav-header', lookupMs,
+        readMs: Math.round(performance.now() - readStarted), bytes: audio.size,
+      })
+      if (valid) return audio
+      await cache.delete(key)
+    } catch (cause) {
+      console.warn('[Piper cache] ERROR', { ...diagnostic, stage: 'read-or-delete', lookupMs, ms: Math.round(performance.now() - readStarted), error: String(cause) })
+      throw cause
+    }
+  } else console.info('[Piper cache] MISS', { ...diagnostic, reason: 'key-not-found', lookupMs })
+  const generationStarted = performance.now()
+  console.info('[Piper cache] GENERATE_START', diagnostic)
+  let audio: Blob
+  try { audio = await synthesize({ ...request, text: validated.text }, signal, status) }
+  catch (cause) {
+    console.warn('[Piper cache] GENERATE_ERROR', { ...diagnostic, generationMs: Math.round(performance.now() - generationStarted), error: String(cause) })
+    throw cause
+  }
+  console.info('[Piper cache] GENERATED', { ...diagnostic, generationMs: Math.round(performance.now() - generationStarted), bytes: audio.size })
+  signal.throwIfAborted()
+  const saveStarted = performance.now()
+  try {
+    await cache.put(key, new Response(audio, { headers: { 'Content-Type': 'audio/wav' } }))
+    console.info('[Piper cache] SAVED', { ...diagnostic, saveMs: Math.round(performance.now() - saveStarted), bytes: audio.size })
+  } catch (cause) {
+    console.warn('[Piper cache] ERROR', { ...diagnostic, stage: 'save', ms: Math.round(performance.now() - saveStarted), error: String(cause) })
+    throw new Error('Не удалось сохранить озвучку: недостаточно места в хранилище браузера. Освободите место и повторите подготовку.')
+  }
   return audio
 }
