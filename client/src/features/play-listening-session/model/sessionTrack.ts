@@ -7,7 +7,7 @@ export interface SessionCue { time: number; index: number; phase: 'original' | '
 export interface SessionTrack { audio: Blob; cues: SessionCue[] }
 const SAMPLE_RATE = 22050
 
-export async function buildSessionTrack(words: IWord[], intervalSeconds: number, voices: PiperSelections, signal: AbortSignal, status: (message: string) => void): Promise<SessionTrack> {
+export async function buildSessionTrack(words: IWord[], intervalSeconds: number, voices: PiperSelections, signal: AbortSignal, status: (message: string) => void, onDiagnostic?: (line: string) => void): Promise<SessionTrack> {
   if (!words.length) throw new Error('Добавьте слова в сессию.')
   if (!Number.isFinite(intervalSeconds) || intervalSeconds < 0 || intervalSeconds > 60) throw new Error('Интервал должен быть от 0 до 60 секунд.')
   // Decode/resample one short clip at a time; playback never uses Web Audio.
@@ -26,7 +26,7 @@ export async function buildSessionTrack(words: IWord[], intervalSeconds: number,
       if (phase === 'translation' && word.hasRecording) audio = await getRecording(word._id)
       else {
         const language = piperLanguage(phase === 'original' ? word.sourceLanguage : word.targetLanguage)
-        audio = await getPiperAudio({ language, voice: voices[language], text: phase === 'original' ? word.original : word.translation }, signal, (message) => status(`${label}. ${message}`))
+        audio = await getPiperAudio({ language, voice: voices[language], text: phase === 'original' ? word.original : word.translation }, signal, (message) => status(`${label}. ${message}`), onDiagnostic)
       }
       signal.throwIfAborted()
       let decoded: AudioBuffer

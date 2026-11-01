@@ -12,6 +12,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [ready, setReady] = useState(false)
+  const [diagnostics, setDiagnostics] = useState<string[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const preparation = useRef<AbortController | null>(null)
   const track = useRef<{ url: string; cues: SessionCue[] } | null>(null)
@@ -38,13 +39,18 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   async function prepare() {
     if (preparation.current || !words.length) return
     const controller = new AbortController()
+    const started = performance.now()
     preparation.current = controller
+    setDiagnostics([`Подготовка: ${new Date().toISOString()}; слов: ${words.length}`])
     changeStatus('preparing'); setError(''); setMessage('Подготовка аудио…')
     try {
       const result = await buildSessionTrack(words, intervalSeconds, voices, controller.signal, (value) => {
         if (preparation.current === controller) setMessage(value)
+      }, (line) => {
+        if (preparation.current === controller) setDiagnostics((previous) => [...previous, line])
       })
       if (preparation.current !== controller) return
+      setDiagnostics((previous) => [...previous, `TRACK_BUILT ${JSON.stringify({ ms: Math.round(performance.now() - started), bytes: result.audio.size })}`])
       const url = URL.createObjectURL(result.audio)
       track.current = { url, cues: result.cues }
       audioRef.current!.src = url
@@ -68,6 +74,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     }
     const canPlay = () => {
       if (track.current && statusRef.current === 'preparing') {
+        setDiagnostics((previous) => [...previous, 'PLAYER_CANPLAY'])
         setReady(true); changeStatus('ready'); setMessage('Аудио готово. Нажмите ▶ в плеере.')
       }
     }
@@ -98,5 +105,5 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     }
   }, [])
 
-  return { status, progress, error, message, ready, audioRef, prepare, stop }
+  return { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics }
 }
