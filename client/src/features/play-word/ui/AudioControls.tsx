@@ -20,7 +20,7 @@ export const AudioControls = ({
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 2,
+        gap: '14px',
       }}
     >
       {/* Левая звуковая волна */}
@@ -32,8 +32,8 @@ export const AudioControls = ({
         disabled={playDisabled}
         aria-label="Воспроизвести"
         sx={{
-          width: 72,
-          height: 72,
+          width: { xs: 56, sm: 72 },
+          height: { xs: 56, sm: 72 },
 
           color: '#FFF8F2',
           background: 'linear-gradient(145deg, #9F493A, #672A21)',
@@ -56,7 +56,7 @@ export const AudioControls = ({
           },
         }}
       >
-        <PlayArrowRoundedIcon sx={{ fontSize: 42 }} />
+        <PlayArrowRoundedIcon sx={{ fontSize: { xs: 34, sm: 42 } }} />
       </IconButton>
 
       {/* Правая звуковая волна */}
@@ -68,12 +68,12 @@ export const AudioControls = ({
         disabled={!isPlaying}
         aria-label="Остановить"
         sx={{
-          width: 48,
-          height: 48,
+          width: { xs: 44, sm: 48 },
+          height: { xs: 44, sm: 48 },
 
-          ml: 1,
+          ml: { xs: 0, sm: 1 },
 
-          color: '#8F382C',
+          color: '#895a39',
           backgroundColor: '#FFF7F1',
 
           border: '1px solid rgba(143, 56, 44, 0.15)',
