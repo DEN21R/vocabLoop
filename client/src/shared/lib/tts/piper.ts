@@ -11,9 +11,13 @@ export const PIPER_VOICES = {
     voice('en_US-joe-medium', 'Joe — мужской, США'),
     voice('en_GB-alba-medium', 'Alba — женский, Шотландия'),
     voice('en_GB-northern_english_male-medium', 'Northern English — мужской, север Англии'),
+    voice('en_US-bryce-medium' as VoiceId, 'Bryce — мужской, США'),
+    voice('en_GB-cori-high', 'Cori — женский, Великобритания (high)'),
   ] },
   de: { name: 'Deutsch', voices: [
     voice('de_DE-thorsten-medium', 'Thorsten — мужской, Германия'),
+    voice('de_DE-thorsten_emotional-medium', 'Thorsten Emotional — мужской, эмоциональный'),
+    voice('de_DE-mls-medium', 'MLS — диктор 2422, Германия'),
   ] },
   ru: { name: 'Русский', voices: [
     voice('ru_RU-denis-medium', 'Денис — мужской'),

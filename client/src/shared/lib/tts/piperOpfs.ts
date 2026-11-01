@@ -1,6 +1,9 @@
 import { HF_BASE, PATH_MAP, type VoiceId } from '@diffusionstudio/vits-web'
 import type { PiperStage } from './piper'
 
+// Bryce is available upstream but missing from vits-web 1.0.3's static catalog.
+PATH_MAP['en_US-bryce-medium' as VoiceId] = 'en/en_US/bryce/medium/en_US-bryce-medium.onnx'
+
 // Sizes of the unchanged, reviewed models used by Listening Sessions. A cancelled write
 // must never be accepted as a complete model on the next generation.
 const MODEL_BYTES = {
@@ -8,7 +11,11 @@ const MODEL_BYTES = {
   'en_US-joe-medium': 63201294,
   'en_GB-alba-medium': 63201294,
   'en_GB-northern_english_male-medium': 63201294,
+  'en_US-bryce-medium': 63531379,
+  'en_GB-cori-high': 114219352,
   'de_DE-thorsten-medium': 63201294,
+  'de_DE-thorsten_emotional-medium': 76745905,
+  'de_DE-mls-medium': 76961079,
   'ru_RU-denis-medium': 63201294,
   'ru_RU-dmitri-medium': 63201294,
 } as const

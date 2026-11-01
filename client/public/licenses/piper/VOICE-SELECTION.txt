@@ -46,3 +46,26 @@ The original cards describe Joe, Alba, Northern English, Thorsten, Denis and
 Dmitri as finetuned from Lessac medium. The Ukrainian model is trained from
 scratch. No weights, phoneme tables or upstream runtime binaries are changed.
 Labels describe the source voices; listen on target devices to assess quality.
+
+Additional selected models (weights/configurations unchanged):
+
+de_DE-thorsten_emotional-medium: Thorsten, German, male. Dataset CC0.
+Source: https://github.com/thorstenMueller/Thorsten-Voice
+The existing runtime selects speaker 0 (amused); no emotion selector is added.
+Full terms: CC0-1.0.txt.
+
+de_DE-mls-medium: German Multilingual LibriSpeech, 236 speakers.
+The existing runtime selects speaker ID 0 (dataset speaker 2422).
+Dataset: MLS, derived from LibriVox audiobooks. License: CC BY 4.0.
+Authors: Vineel Pratap, Qiantong Xu, Anuroop Sriram, Gabriel Synnaeve,
+and Ronan Collobert (2020), MLS: A Large-Scale Multilingual Dataset for
+Speech Research. Source: https://www.openslr.org/94/
+Paper: https://arxiv.org/abs/2012.03411
+Full terms: CC-BY-4.0.txt. No endorsement is implied.
+
+en_US-bryce-medium: Bryce Beattie, male, US English. Dataset public domain.
+Source: https://brycebeattie.com/files/tts/
+
+en_GB-cori-high: Cori, female, British English. Dataset public domain.
+Dataset assembled from LibriVox by Bryce Beattie.
+Sources: https://librivox.org ; https://brycebeattie.com/files/tts/

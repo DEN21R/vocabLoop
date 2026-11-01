@@ -104,6 +104,30 @@
       "url": "https://datashare.ed.ac.uk/server/api/core/bitstreams/ca0b398a-635c-48cd-b85a-beb6f8401e0d/content",
       "sha256": "f09b25492b8c18da8b460eceab54a6df72871a7d552aef714bc3ec6fa7c010aa",
       "bytes": 820
+    },
+    {
+      "file": "de_DE-thorsten_emotional-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/de/de_DE/thorsten_emotional/medium/MODEL_CARD",
+      "sha256": "7c3201dbccb062f071a3cdda0dce7eb05fe1f889fba2c6180994f97ec5eeafd8",
+      "bytes": 302
+    },
+    {
+      "file": "de_DE-mls-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/de/de_DE/mls/medium/MODEL_CARD",
+      "sha256": "ca1bf03a3c287fb6968acfa010e1917f85f0aa59db0f371efc3a2857f4035ffd",
+      "bytes": 223
+    },
+    {
+      "file": "en_US-bryce-medium-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/en/en_US/bryce/medium/MODEL_CARD",
+      "sha256": "96042c4ddbd405f6e40e2938b069987f4016a35832114bbefed1ed04242ee532",
+      "bytes": 405
+    },
+    {
+      "file": "en_GB-cori-high-MODEL-CARD.txt",
+      "url": "https://huggingface.co/diffusionstudio/piper-voices/raw/840e38a7e26d813bd6221b78cfbaefa3585b3f71/en/en_GB/cori/high/MODEL_CARD",
+      "sha256": "136e7bd168b6c35b4a5df01a0253297e5773b5775ceae0af5160f264aa58208f",
+      "bytes": 468
     }
   ],
   "binaries": [
