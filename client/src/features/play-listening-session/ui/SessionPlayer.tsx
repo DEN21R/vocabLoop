@@ -54,7 +54,7 @@ function Playback({
   voices: PiperSelections
   onActiveWordChange: (wordId: string | null) => void
 }) {
-  const { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics } =
+  const { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics, getDiagnostics } =
     useSessionPlayer(words, intervalSeconds, voices)
   const [copyMessage, setCopyMessage] = useState('')
   const [speed, setSpeed] = useState(1)
@@ -97,7 +97,7 @@ function Playback({
             sx={{ color: '#a75108' }}
             onClick={async () => {
               try {
-                await navigator.clipboard.writeText(diagnostics.join('\n'))
+                await navigator.clipboard.writeText(getDiagnostics().join('\n'))
                 setCopyMessage('Скопировано')
               } catch {
                 setCopyMessage('Выделите и скопируйте текст ниже')

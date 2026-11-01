@@ -17,6 +17,20 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   const preparation = useRef<AbortController | null>(null)
   const track = useRef<{ url: string; cues: SessionCue[] } | null>(null)
   const statusRef = useRef<Status>('stopped')
+  const playerLoadStarted = useRef<number | null>(null)
+
+  function playerSnapshot(event: string) {
+    const audio = audioRef.current
+    return `PLAYER_${event} ${JSON.stringify({
+      ms: playerLoadStarted.current === null ? null : Math.round(performance.now() - playerLoadStarted.current),
+      readyState: audio?.readyState, networkState: audio?.networkState,
+      duration: audio && Number.isFinite(audio.duration) ? audio.duration : null,
+      paused: audio?.paused, hidden: audio?.hidden, preload: audio?.preload,
+      sourceMatchesTrack: !!track.current && audio?.currentSrc === track.current.url,
+      visibility: document.visibilityState,
+      error: audio?.error ? { code: audio.error.code, message: audio.error.message } : null,
+    })}`
+  }
 
   function changeStatus(next: Status) { statusRef.current = next; setStatus(next) }
   function cancelPreparation() {
@@ -40,6 +54,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     if (preparation.current || !words.length) return
     const controller = new AbortController()
     const started = performance.now()
+    playerLoadStarted.current = null
     preparation.current = controller
     setDiagnostics([`Подготовка: ${new Date().toISOString()}; слов: ${words.length}`])
     changeStatus('preparing'); setError(''); setMessage('Подготовка аудио…')
@@ -53,9 +68,12 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       setDiagnostics((previous) => [...previous, `TRACK_BUILT ${JSON.stringify({ ms: Math.round(performance.now() - started), bytes: result.audio.size })}`])
       const url = URL.createObjectURL(result.audio)
       track.current = { url, cues: result.cues }
+      playerLoadStarted.current = performance.now()
       audioRef.current!.src = url
       setMessage('Загрузка трека в плеер…')
       audioRef.current!.load()
+      const snapshot = playerSnapshot('LOAD_CALLED')
+      setDiagnostics((previous) => [...previous, snapshot])
     } catch (cause) {
       if (preparation.current !== controller) return
       changeStatus('stopped'); setMessage('')
@@ -68,13 +86,19 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   useEffect(() => {
     const audio = audioRef.current!
     audio.loop = true
+    const diagnosticEvents = ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'suspend', 'stalled', 'waiting', 'error', 'abort', 'emptied', 'playing', 'pause']
+    const logPlayerEvent = (event: Event) => {
+      if (playerLoadStarted.current === null) return
+      const snapshot = playerSnapshot(event.type.toUpperCase())
+      setDiagnostics((previous) => [...previous, snapshot])
+    }
+    for (const event of diagnosticEvents) audio.addEventListener(event, logPlayerEvent)
     const update = () => {
       const cue = track.current && sessionPosition(track.current.cues, audio.currentTime)
       if (cue) setProgress((previous) => previous.index === cue.index && previous.phase === cue.phase ? previous : { index: cue.index, phase: cue.phase })
     }
     const canPlay = () => {
       if (track.current && statusRef.current === 'preparing') {
-        setDiagnostics((previous) => [...previous, 'PLAYER_CANPLAY'])
         setReady(true); changeStatus('ready'); setMessage('Аудио готово. Нажмите ▶ в плеере.')
       }
     }
@@ -95,6 +119,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     audio.addEventListener('error', failed)
     return () => {
       cancelPreparation()
+      for (const event of diagnosticEvents) audio.removeEventListener(event, logPlayerEvent)
       audio.removeEventListener('timeupdate', update)
       audio.removeEventListener('canplay', canPlay)
       audio.removeEventListener('playing', playing)
@@ -105,5 +130,6 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
     }
   }, [])
 
-  return { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics }
+  const getDiagnostics = () => [...diagnostics, playerSnapshot('COPY_STATE')]
+  return { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics, getDiagnostics }
 }
