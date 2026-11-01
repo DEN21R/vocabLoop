@@ -48,8 +48,8 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       const url = URL.createObjectURL(result.audio)
       track.current = { url, cues: result.cues }
       audioRef.current!.src = url
+      setMessage('Загрузка трека в плеер…')
       audioRef.current!.load()
-      setReady(true); changeStatus('ready'); setMessage('Аудио готово. Нажмите ▶ в плеере.')
     } catch (cause) {
       if (preparation.current !== controller) return
       changeStatus('stopped'); setMessage('')
@@ -66,24 +66,31 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       const cue = track.current && sessionPosition(track.current.cues, audio.currentTime)
       if (cue) setProgress((previous) => previous.index === cue.index && previous.phase === cue.phase ? previous : { index: cue.index, phase: cue.phase })
     }
+    const canPlay = () => {
+      if (track.current && statusRef.current === 'preparing') {
+        setReady(true); changeStatus('ready'); setMessage('Аудио готово. Нажмите ▶ в плеере.')
+      }
+    }
     const playing = () => {
       if (!audio.paused) { changeStatus('playing'); setError(''); setMessage('') }
     }
     const paused = () => { if (audio.paused && statusRef.current === 'playing') changeStatus('paused') }
     const failed = () => {
-      audio.pause(); changeStatus('stopped')
+      audio.pause(); changeStatus('stopped'); setMessage('')
       setError(`Не удалось воспроизвести аудиотрек (${audio.error?.message || audio.error?.code || 'ошибка аудио'}).`)
       releaseTrack(); setReady(false)
       audio.removeAttribute('src'); audio.load()
     }
     audio.addEventListener('timeupdate', update)
-    audio.addEventListener('play', playing)
+    audio.addEventListener('canplay', canPlay)
+    audio.addEventListener('playing', playing)
     audio.addEventListener('pause', paused)
     audio.addEventListener('error', failed)
     return () => {
       cancelPreparation()
       audio.removeEventListener('timeupdate', update)
-      audio.removeEventListener('play', playing)
+      audio.removeEventListener('canplay', canPlay)
+      audio.removeEventListener('playing', playing)
       audio.removeEventListener('pause', paused)
       audio.removeEventListener('error', failed)
       audio.pause(); audio.removeAttribute('src'); audio.load()

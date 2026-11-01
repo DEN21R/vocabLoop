@@ -118,7 +118,7 @@ function playerEnvironment(build) {
     './sessionTrack': { buildSessionTrack: build, sessionPosition: (cues, time) => cues.findLast((cue) => cue.time <= time) },
   }, { URL: { createObjectURL: () => 'blob:track', revokeObjectURL: (url) => revoked.push(url) } })
   const player = createPlayer(words, 2, voices)
-  return { player, audio, states, revoked, dispose: () => cleanups.forEach((fn) => fn()) }
+  return { player, audio, states, revoked, emit: (type) => events.get(type)?.(), dispose: () => cleanups.forEach((fn) => fn()) }
 }
 const track = { audio: new Blob(['wav']), cues: [{ time: 0, index: 0, phase: 'original' }] }
 
@@ -126,10 +126,16 @@ test('prepared track uses HTML audio.loop; pause resumes exactly and stop rewind
   let builds = 0
   const env = playerEnvironment(async () => { builds++; return track })
   await env.player.prepare()
+  assert(!env.states.includes('ready'), 'a generated Blob does not mean the media element can play it')
+  assert(env.states.includes('Загрузка трека в плеер…'))
+  env.emit('canplay')
+  assert(env.states.includes('ready'))
   assert.equal(env.audio.calls, 0, 'preparation must not autoplay outside a gesture')
   const playing = env.audio.play()
   assert.equal(env.audio.calls, 1, 'play is invoked synchronously from the click')
   await playing
+  assert(!env.states.includes('playing'), 'play may fire before buffering finishes')
+  env.emit('playing')
   assert(env.states.includes('playing'))
   assert.equal(env.audio.loop, true)
   env.audio.currentTime = 1.5

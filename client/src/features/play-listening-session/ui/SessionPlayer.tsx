@@ -57,7 +57,8 @@ function Playback({
     useSessionPlayer(words, intervalSeconds, voices)
   const [speed, setSpeed] = useState(1)
   const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
-  const activeWordId = status === 'playing' ? words[progress.index]?._id ?? null : null
+  const activeWordId =
+    status === 'playing' ? (words[progress.index]?._id ?? null) : null
 
   useEffect(() => {
     onActiveWordChange(activeWordId)
@@ -88,7 +89,7 @@ function Playback({
         ref={audioRef}
         controls
         loop
-        preload="metadata"
+        preload="auto"
         hidden={!ready}
         onRateChange={() => setSpeed(audioRef.current?.playbackRate ?? 1)}
         style={{ width: '100%', marginTop: 12 }}
@@ -128,9 +129,14 @@ function Playback({
           </TextField>
           <Button
             sx={{
-              color: '#f78811',
-              border: '2px #f78811 solid',
-              borderRadius: '12px',
+              backgroundColor: '#f78811',
+              color: '#fff',
+
+              borderRadius: '50%',
+              width: 56,
+              height: 56,
+              minWidth: 56,
+              p: 0,
             }}
             onClick={stop}
             disabled={status === 'stopped'}
