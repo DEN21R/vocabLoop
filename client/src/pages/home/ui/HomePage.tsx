@@ -15,12 +15,14 @@ import {
   Tooltip,
 } from '@mui/material'
 import MicIcon from '@mui/icons-material/Mic'
+import EditIcon from '@mui/icons-material/Edit'
 import CloseIcon from '@mui/icons-material/Close'
 import ramImage from '../../../shared/assets/ram.png'
 import { getWords, WordCard, type IWord } from '../../../entities/word'
 import { useEffect, useRef, useState } from 'react'
 import { getSessions, type ListeningSession } from '../../../entities/listening-session'
 import AddWordForm from '../../../features/add-word/'
+import EditWordDialog from '../../../features/edit-word/ui/EditWordDialog'
 import { DeleteWordButton } from '../../../features/delete-word'
 import {
   useWordPlayback,
@@ -65,6 +67,7 @@ function HomePage() {
   const [selectedWordIds, setSelectedWordIds] = useState<string[]>([])
   const [selectedVoices, setSelectedVoices] = useState(loadPiperSelections)
   const [recordingWord, setRecordingWord] = useState<IWord | null>(null)
+  const [editingWord, setEditingWord] = useState<IWord | null>(null)
   const [translationSources, setTranslationSources] = useState<
     Record<string, 'tts' | 'recording'>
   >(loadTranslationSources)
@@ -105,6 +108,15 @@ function HomePage() {
     setWords((previousWords) =>
       previousWords.filter((word) => word._id !== wordId),
     )
+  }
+
+  function handleWordUpdated(updated: IWord) {
+    setWords((current) => current
+      .map((word) => word._id === updated._id ? updated : word)
+      .filter((word) => [word.original, word.translation].some((text) =>
+        text.toLowerCase().includes(query.toLowerCase()),
+      )))
+    setEditingWord(null)
   }
 
   useEffect(() => {
@@ -431,6 +443,16 @@ function HomePage() {
                   <MicIcon />
                 </IconButton>
 
+                <Tooltip title="Редактировать слово">
+                  <IconButton
+                    disabled={isPlaying || recordingWord !== null}
+                    onClick={() => setEditingWord(word)}
+                    aria-label="Редактировать слово"
+                    sx={{ color: '#895a39' }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
                 <DeleteWordButton el={word} onDeleted={handleWordDeleted} />
               </Box>
             </Box>
@@ -446,6 +468,14 @@ function HomePage() {
             >
               {loadingMore ? 'Загружаем…' : 'Загрузить ещё'}
             </Button>
+          )}
+          {editingWord && (
+            <EditWordDialog
+              key={editingWord._id}
+              word={editingWord}
+              onClose={() => setEditingWord(null)}
+              onSaved={handleWordUpdated}
+            />
           )}
           <RecordWordDialog
             open={recordingWord !== null}

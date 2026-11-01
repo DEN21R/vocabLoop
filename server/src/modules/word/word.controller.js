@@ -105,6 +105,30 @@ export const getWords = async (req, res) => {
   }
 }
 
+export const updateWord = async (req, res) => {
+  try {
+    if (!mongoose.isObjectIdOrHexString(req.params.id)) {
+      return res.status(400).json({ message: 'Некорректный ID слова' })
+    }
+    const { original, translation } = req.body ?? {}
+    if (
+      typeof original !== 'string' || !original.trim() || original.trim().length > 200 ||
+      typeof translation !== 'string' || !translation.trim() || translation.trim().length > 2000
+    ) {
+      return res.status(400).json({ message: 'Укажите слово до 200 символов и перевод до 2000 символов' })
+    }
+    const word = await Word.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
+      { $set: { original: original.trim(), translation: translation.trim() } },
+      { new: true, runValidators: true },
+    )
+    if (!word) return res.status(404).json({ message: 'Слово не найдено' })
+    return res.status(200).json({ word })
+  } catch {
+    return res.status(500).json({ message: 'Не удалось сохранить слово' })
+  }
+}
+
 export const deleteWord = async (req, res) => {
   try {
     const { id } = req.params

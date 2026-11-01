@@ -13,3 +13,8 @@ export async function getWords(page?: { cursor?: string; search?: string }, sign
   })
   return response.data
 }
+
+export async function updateWord(id: string, data: Pick<IWord, 'original' | 'translation'>) {
+  const response = await api.patch<{ word: IWord }>(`/words/${id}`, data)
+  return response.data
+}
