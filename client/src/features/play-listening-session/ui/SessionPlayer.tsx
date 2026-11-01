@@ -54,7 +54,7 @@ function Playback({
   voices: PiperSelections
   onActiveWordChange: (wordId: string | null) => void
 }) {
-  const { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics, getDiagnostics } =
+  const { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics, getDiagnostics, downloadUrl } =
     useSessionPlayer(words, intervalSeconds, voices)
   const [copyMessage, setCopyMessage] = useState('')
   const [speed, setSpeed] = useState(1)
@@ -106,6 +106,17 @@ function Playback({
           >
             Скопировать
           </Button>
+          {downloadUrl && (
+            <Button
+              component="a"
+              href={downloadUrl}
+              download="vocabloop-session.wav"
+              size="small"
+              sx={{ color: '#a75108' }}
+            >
+              Скачать трек
+            </Button>
+          )}
           {copyMessage && <Typography role="status" variant="body2">{copyMessage}</Typography>}
           <Box component="pre" sx={{ m: 0, maxHeight: 180, overflow: 'auto', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: 11, userSelect: 'text' }}>
             {diagnostics.join('\n')}

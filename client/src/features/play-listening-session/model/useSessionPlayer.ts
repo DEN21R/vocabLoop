@@ -13,6 +13,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   const [message, setMessage] = useState('')
   const [ready, setReady] = useState(false)
   const [diagnostics, setDiagnostics] = useState<string[]>([])
+  const [downloadUrl, setDownloadUrl] = useState('')
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const preparation = useRef<AbortController | null>(null)
   const track = useRef<{ url: string; cues: SessionCue[] } | null>(null)
@@ -41,6 +42,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   function releaseTrack() {
     if (track.current) URL.revokeObjectURL(track.current.url)
     track.current = null
+    setDownloadUrl('')
   }
 
   function stop() {
@@ -69,6 +71,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       setDiagnostics((previous) => [...previous, `TRACK_BUILT ${JSON.stringify({ ms: Math.round(performance.now() - started), bytes: result.audio.size })}`])
       const url = URL.createObjectURL(result.audio)
       track.current = { url, cues: result.cues }
+      setDownloadUrl(url)
       playerLoadStarted.current = performance.now()
       audioRef.current!.src = url
       setMessage('Загрузка трека в плеер…')
@@ -133,5 +136,5 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
   }, [])
 
   const getDiagnostics = () => [...diagnostics, playerSnapshot('COPY_STATE')]
-  return { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics, getDiagnostics }
+  return { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics, getDiagnostics, downloadUrl }
 }
