@@ -20,7 +20,10 @@ import CloseIcon from '@mui/icons-material/Close'
 import ramImage from '../../../shared/assets/ram.png'
 import { getWords, WordCard, type IWord } from '../../../entities/word'
 import { useEffect, useRef, useState } from 'react'
-import { getSessions, type ListeningSession } from '../../../entities/listening-session'
+import {
+  getSessions,
+  type ListeningSession,
+} from '../../../entities/listening-session'
 import AddWordForm from '../../../features/add-word/'
 import EditWordDialog from '../../../features/edit-word/ui/EditWordDialog'
 import { DeleteWordButton } from '../../../features/delete-word'
@@ -111,11 +114,15 @@ function HomePage() {
   }
 
   function handleWordUpdated(updated: IWord) {
-    setWords((current) => current
-      .map((word) => word._id === updated._id ? updated : word)
-      .filter((word) => [word.original, word.translation].some((text) =>
-        text.toLowerCase().includes(query.toLowerCase()),
-      )))
+    setWords((current) =>
+      current
+        .map((word) => (word._id === updated._id ? updated : word))
+        .filter((word) =>
+          [word.original, word.translation].some((text) =>
+            text.toLowerCase().includes(query.toLowerCase()),
+          ),
+        ),
+    )
     setEditingWord(null)
   }
 
@@ -241,7 +248,15 @@ function HomePage() {
       {sessionsError && <Typography color="error">{sessionsError}</Typography>}
       {status === 'success' && (
         <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              mb: 2,
+            }}
+          >
             <Button
               variant="contained"
               sx={{ backgroundColor: '#5d2c07' }}
@@ -253,10 +268,28 @@ function HomePage() {
               <IconButton
                 aria-label="Открыть подсказку о создании сессии"
                 onClick={() => setHelpOpen(true)}
-                sx={{ p: 0, width: 64, height: 64, overflow: 'hidden', borderRadius: '50%', flexShrink: 0 }}
+                sx={{
+                  p: 0,
+                  width: 64,
+                  height: 64,
+                  overflow: 'hidden',
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                }}
               >
-                <Box component="img" src={ramImage} alt=""
-                  sx={{ width: 64, height: 64, objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.5)', borderRadius: '50%' }} />
+                <Box
+                  component="img"
+                  src={ramImage}
+                  alt=""
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    transform: 'scale(1.5)',
+                    borderRadius: '50%',
+                  }}
+                />
               </IconButton>
             </Tooltip>
           </Box>
@@ -266,38 +299,60 @@ function HomePage() {
             fullWidth
             maxWidth="sm"
             aria-labelledby="create-session-help-title"
-            slotProps={{ paper: { sx: { borderRadius: 3, bgcolor: '#fcf5f0', color: '#5d2c07' } } }}
+            slotProps={{
+              paper: {
+                sx: { borderRadius: 3, bgcolor: '#fcf5f0', color: '#5d2c07' },
+              },
+            }}
           >
-            <DialogTitle id="create-session-help-title" sx={{ pr: 7 }}>Как создать сессию</DialogTitle>
-            <IconButton aria-label="Закрыть подсказку" onClick={closeHelp}
-              sx={{ position: 'absolute', right: 12, top: 12, color: '#895a39' }}>
+            <DialogTitle id="create-session-help-title" sx={{ pr: 7 }}>
+              Как создать сессию
+            </DialogTitle>
+            <IconButton
+              aria-label="Закрыть подсказку"
+              onClick={closeHelp}
+              sx={{
+                position: 'absolute',
+                right: 12,
+                top: 12,
+                color: '#895a39',
+              }}
+            >
               <CloseIcon />
             </IconButton>
             <DialogContent sx={{ pb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 1, color: '#895a39' }}>1. Выберите слова</Typography>
+              <Typography variant="h6" sx={{ mb: 1, color: '#895a39' }}>
+                1. Выберите слова
+              </Typography>
               <Typography sx={{ mb: 1 }}>
-                Добавьте нужные слова в словарь, выберите голоса в меню «Выбрать голос»
-                и прослушайте оригинал и перевод кнопкой ▶ рядом со словом.
+                Добавьте нужные слова в словарь, выберите голоса в меню «Выбрать
+                голос» и прослушайте оригинал и перевод кнопкой ▶ рядом со
+                словом.
               </Typography>
               <Typography>
-                Отметьте «В сессию» у нужных слов. Порядок будет таким же, как очередность выбора.
-                Слова, уже входящие в сессию, отмечены и недоступны для повторного выбора.
-                Найти остальные слова можно через поиск или кнопку «Загрузить ещё».
+                Отметьте «В сессию» у нужных слов. Порядок будет таким же, как
+                очередность выбора. Слова, уже входящие в сессию, отмечены и
+                недоступны для повторного выбора. Найти остальные слова можно
+                через поиск или кнопку «Загрузить ещё».
               </Typography>
               <Divider sx={{ my: 2, borderColor: '#e7c4a7' }} />
-              <Typography variant="h6" sx={{ mb: 1, color: '#895a39' }}>2. Создайте или дополните сессию</Typography>
-              <Typography sx={{ mb: 1 }}>
-                В поле «Сессия» оставьте «Создать новую», введите название и нажмите
-                «Создать сессию из выбранных слов». Нужно выбрать хотя бы одно слово.
+              <Typography variant="h6" sx={{ mb: 1, color: '#895a39' }}>
+                2. Создайте или дополните сессию
               </Typography>
               <Typography sx={{ mb: 1 }}>
-                Чтобы дополнить существующую сессию, выберите её в том же списке и нажмите
-                «Добавить выбранные слова в сессию». Слова добавятся в конец в порядке выбора,
-                прежний порядок сохранится. Добавление слов выполняется на странице «Все слова».
+                В поле «Сессия» оставьте «Создать новую», введите название и
+                нажмите «Создать сессию из выбранных слов». Нужно выбрать хотя
+                бы одно слово.
+              </Typography>
+              <Typography sx={{ mb: 1 }}>
+                Чтобы дополнить существующую сессию, выберите её в том же списке
+                и нажмите «Добавить выбранные слова в сессию». Слова добавятся в
+                конец в порядке выбора, прежний порядок сохранится. Добавление
+                слов выполняется на странице «Все слова».
               </Typography>
               <Typography>
-                После сохранения откроется страница сессии. Нажмите «Подготовить аудио»,
-                дождитесь окончания подготовки и нажмите ▶ в плеере.
+                После сохранения откроется страница сессии. Нажмите «Подготовить
+                аудио», дождитесь окончания подготовки и нажмите ▶ в плеере.
               </Typography>
             </DialogContent>
           </Dialog>
@@ -307,15 +362,19 @@ function HomePage() {
             fullWidth
             maxWidth="xs"
             sx={{ '& .MuiDialog-container': { alignItems: 'flex-start' } }}
-            slotProps={{ paper: { sx: {
-              mt: 'max(16px, env(safe-area-inset-top))',
-              mx: 2,
-              width: 'calc(100% - 32px)',
-              bgcolor: '#fcf5f0',
-              color: '#5d2c07',
-              border: '1px solid #e7c4a7',
-              borderRadius: 3,
-            } } }}
+            slotProps={{
+              paper: {
+                sx: {
+                  mt: 'max(16px, env(safe-area-inset-top))',
+                  mx: 2,
+                  width: 'calc(100% - 32px)',
+                  bgcolor: '#fcf5f0',
+                  color: '#5d2c07',
+                  border: '1px solid #e7c4a7',
+                  borderRadius: 3,
+                },
+              },
+            }}
           >
             <AddWordForm onCreated={handleWordCreated} />
           </Dialog>
@@ -360,6 +419,9 @@ function HomePage() {
                       '&.Mui-checked': {
                         color: '#FF9800',
                       },
+                      '&.Mui-disabled': {
+                        color: '#9e9e9e',
+                      },
                     }}
                     checked={
                       sessionWordIds?.has(word._id) ||
@@ -390,7 +452,7 @@ function HomePage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: 2,
+                  gap: { xs: 0.5, sm: 2 },
                   flexWrap: 'wrap',
                 }}
               >
@@ -439,6 +501,7 @@ function HomePage() {
                   disabled={isPlaying}
                   onClick={() => setRecordingWord(word)}
                   aria-label="Записать перевод"
+                  sx={{ color: '#895a39' }}
                 >
                   <MicIcon />
                 </IconButton>
