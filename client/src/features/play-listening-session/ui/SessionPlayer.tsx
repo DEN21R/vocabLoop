@@ -6,6 +6,7 @@ import {
   type PiperSelections,
 } from '../../../shared/lib/tts/piper'
 import { useSessionPlayer } from '../model/useSessionPlayer'
+import ramStopImage from '../../../shared/assets/ramStop.png'
 
 export default function SessionPlayer({
   words,
@@ -56,6 +57,7 @@ function Playback({
   const { status, progress, error, message, ready, audioRef, prepare, stop } =
     useSessionPlayer(words, intervalSeconds, voices)
   const [speed, setSpeed] = useState(1)
+  const [stopCount, setStopCount] = useState(0)
   const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
   const activeWordId =
     status === 'playing' ? (words[progress.index]?._id ?? null) : null
@@ -127,22 +129,53 @@ function Playback({
               </MenuItem>
             ))}
           </TextField>
-          <Button
-            sx={{
-              backgroundColor: '#f78811',
-              color: '#fff',
+          <Box sx={{ position: 'relative', flexShrink: 0 }}>
+            <Button
+              sx={{
+                backgroundColor: '#f78811',
+                color: '#fff',
 
-              borderRadius: '50%',
-              width: 56,
-              height: 56,
-              minWidth: 56,
-              p: 0,
-            }}
-            onClick={stop}
-            disabled={status === 'stopped'}
-          >
-            Стоп
-          </Button>
+                borderRadius: '50%',
+                width: 56,
+                height: 56,
+                minWidth: 56,
+                p: 0,
+              }}
+              onClick={() => {
+                stop()
+                setStopCount((count) => count + 1)
+              }}
+              disabled={status === 'stopped'}
+            >
+              Стоп
+            </Button>
+            {stopCount > 0 && (
+              <Box
+                key={stopCount}
+                component="img"
+                src={ramStopImage}
+                alt=""
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  left: 150,
+                  top: 30,
+                  bottom: 'calc(100% + 8px)',
+                  transform: 'translateX(-50%)',
+                  width: 180,
+                  height: 120,
+                  objectFit: 'contain',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                  animation: 'stopRamFade 8s ease-in-out 0.5s both',
+                  '@keyframes stopRamFade': {
+                    '0%, 100%': { opacity: 0 },
+                    '12.5%, 87.5%': { opacity: 1 },
+                  },
+                }}
+              />
+            )}
+          </Box>
         </Box>
       )}
       {message && (
