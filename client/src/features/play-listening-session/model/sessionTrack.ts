@@ -7,7 +7,7 @@ export interface SessionCue { time: number; index: number; phase: 'original' | '
 export interface SessionTrack { audio: Blob; cues: SessionCue[] }
 const SAMPLE_RATE = 22050
 
-export async function buildSessionTrack(words: IWord[], intervalSeconds: number, voices: PiperSelections, signal: AbortSignal, status: (message: string) => void, onDiagnostic?: (line: string) => void): Promise<SessionTrack> {
+export async function buildSessionTrack(words: IWord[], intervalSeconds: number, voices: PiperSelections, signal: AbortSignal, status: (message: string) => void): Promise<SessionTrack> {
   if (!words.length) throw new Error('Добавьте слова в сессию.')
   if (!Number.isFinite(intervalSeconds) || intervalSeconds < 0 || intervalSeconds > 60) throw new Error('Интервал должен быть от 0 до 60 секунд.')
   // Decode/resample one short clip at a time; playback never uses Web Audio.
@@ -26,7 +26,7 @@ export async function buildSessionTrack(words: IWord[], intervalSeconds: number,
       if (phase === 'translation' && word.hasRecording) audio = await getRecording(word._id)
       else {
         const language = piperLanguage(phase === 'original' ? word.sourceLanguage : word.targetLanguage)
-        audio = await getPiperAudio({ language, voice: voices[language], text: phase === 'original' ? word.original : word.translation }, signal, (message) => status(`${label}. ${message}`), onDiagnostic)
+        audio = await getPiperAudio({ language, voice: voices[language], text: phase === 'original' ? word.original : word.translation }, signal, (message) => status(`${label}. ${message}`))
       }
       signal.throwIfAborted()
       let decoded: AudioBuffer
@@ -49,13 +49,7 @@ export async function buildSessionTrack(words: IWord[], intervalSeconds: number,
     }
   }
   signal.throwIfAborted()
-  const assembled = new Blob([wavHeader(samples, SAMPLE_RATE), ...parts], { type: 'audio/wav' })
-  // Materialize all slices before the media element starts reading byte ranges.
-  const started = performance.now()
-  const buffer = await assembled.arrayBuffer()
-  signal.throwIfAborted()
-  onDiagnostic?.(`TRACK_BUFFER_READY ${JSON.stringify({ ms: Math.round(performance.now() - started), bytes: buffer.byteLength })}`)
-  return { audio: new Blob([buffer], { type: 'audio/wav' }), cues }
+  return { audio: new Blob([wavHeader(samples, SAMPLE_RATE), ...parts], { type: 'audio/wav' }), cues }
 }
 
 export function sessionPosition(cues: SessionCue[], time: number) {

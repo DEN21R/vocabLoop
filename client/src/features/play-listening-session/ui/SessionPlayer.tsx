@@ -54,9 +54,8 @@ function Playback({
   voices: PiperSelections
   onActiveWordChange: (wordId: string | null) => void
 }) {
-  const { status, progress, error, message, ready, audioRef, prepare, stop, diagnostics, getDiagnostics, downloadUrl } =
+  const { status, progress, error, message, ready, audioRef, prepare, stop } =
     useSessionPlayer(words, intervalSeconds, voices)
-  const [copyMessage, setCopyMessage] = useState('')
   const [speed, setSpeed] = useState(1)
   const [stopCount, setStopCount] = useState(0)
   const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
@@ -78,7 +77,6 @@ function Playback({
           mt: 2,
         }}
         onClick={() => {
-          setCopyMessage('')
           void prepare()
         }}
         disabled={ready || status === 'preparing' || !words.length}
@@ -89,40 +87,6 @@ function Playback({
           'Аудио подготовлено'
         : 'Подготовить аудио'}
       </Button>
-      {diagnostics.length > 0 && (
-        <Box sx={{ mt: 1, p: 1.5, backgroundColor: '#fff4e5', color: '#5d2c07', borderRadius: 2 }}>
-          <Typography variant="body2">Временная диагностика Piper · время в мс</Typography>
-          <Button
-            size="small"
-            sx={{ color: '#a75108' }}
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(getDiagnostics().join('\n'))
-                setCopyMessage('Скопировано')
-              } catch {
-                setCopyMessage('Выделите и скопируйте текст ниже')
-              }
-            }}
-          >
-            Скопировать
-          </Button>
-          {downloadUrl && (
-            <Button
-              component="a"
-              href={downloadUrl}
-              download="vocabloop-session.wav"
-              size="small"
-              sx={{ color: '#a75108' }}
-            >
-              Скачать трек
-            </Button>
-          )}
-          {copyMessage && <Typography role="status" variant="body2">{copyMessage}</Typography>}
-          <Box component="pre" sx={{ m: 0, maxHeight: 180, overflow: 'auto', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: 11, userSelect: 'text' }}>
-            {diagnostics.join('\n')}
-          </Box>
-        </Box>
-      )}
       <audio
         ref={audioRef}
         controls
