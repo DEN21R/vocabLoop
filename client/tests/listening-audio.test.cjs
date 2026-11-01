@@ -126,10 +126,7 @@ test('prepared track uses HTML audio.loop; pause resumes exactly and stop rewind
   let builds = 0
   const env = playerEnvironment(async () => { builds++; return track })
   await env.player.prepare()
-  assert(!env.states.includes('ready'), 'a generated Blob does not mean the media element can play it')
-  assert(env.states.includes('Загрузка трека в плеер…'))
-  env.emit('canplay')
-  assert(env.states.includes('ready'))
+  assert(env.states.includes('ready'), 'the completed track exposes native controls without waiting for canplay')
   assert.equal(env.audio.calls, 0, 'preparation must not autoplay outside a gesture')
   const playing = env.audio.play()
   assert.equal(env.audio.calls, 1, 'play is invoked synchronously from the click')

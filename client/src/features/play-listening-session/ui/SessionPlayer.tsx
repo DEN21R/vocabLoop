@@ -91,7 +91,7 @@ function Playback({
         ref={audioRef}
         controls
         loop
-        preload="auto"
+        preload="metadata"
         hidden={!ready}
         onRateChange={() => setSpeed(audioRef.current?.playbackRate ?? 1)}
         style={{ width: '100%', marginTop: 12 }}
