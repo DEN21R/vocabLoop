@@ -14,6 +14,6 @@ function DeleteWordButton({
       onDeleted(wordId)
     } catch {}
   }
-  return <DeleteIcon onClick={() => handleDeletePost(el._id)} />
+  return <DeleteIcon sx={{ color: '#895a39' }} onClick={() => handleDeletePost(el._id)} />
 }
 export default DeleteWordButton
