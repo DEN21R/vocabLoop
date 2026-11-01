@@ -97,9 +97,9 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       const cue = track.current && sessionPosition(track.current.cues, audio.currentTime)
       if (cue) setProgress((previous) => previous.index === cue.index && previous.phase === cue.phase ? previous : { index: cue.index, phase: cue.phase })
     }
-    const canPlay = () => {
-      if (track.current && statusRef.current === 'preparing') {
-        setReady(true); changeStatus('ready'); setMessage('Аудио готово. Нажмите ▶ в плеере.')
+    const metadataLoaded = () => {
+      if (track.current && audio.currentSrc === track.current.url && statusRef.current === 'preparing' && Number.isFinite(audio.duration) && audio.duration > 0 && !audio.error) {
+        setReady(true); changeStatus('ready'); setMessage('Трек подготовлен. Нажмите ▶ в плеере.')
       }
     }
     const playing = () => {
@@ -113,7 +113,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       audio.removeAttribute('src'); audio.load()
     }
     audio.addEventListener('timeupdate', update)
-    audio.addEventListener('canplay', canPlay)
+    audio.addEventListener('loadedmetadata', metadataLoaded)
     audio.addEventListener('playing', playing)
     audio.addEventListener('pause', paused)
     audio.addEventListener('error', failed)
@@ -121,7 +121,7 @@ export function useSessionPlayer(words: IWord[], intervalSeconds: number, voices
       cancelPreparation()
       for (const event of diagnosticEvents) audio.removeEventListener(event, logPlayerEvent)
       audio.removeEventListener('timeupdate', update)
-      audio.removeEventListener('canplay', canPlay)
+      audio.removeEventListener('loadedmetadata', metadataLoaded)
       audio.removeEventListener('playing', playing)
       audio.removeEventListener('pause', paused)
       audio.removeEventListener('error', failed)
