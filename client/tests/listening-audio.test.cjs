@@ -95,21 +95,16 @@ test('cancelling synthesis terminates its Worker without saving an unfinished cl
   assert.equal(terminated, true)
 })
 
-function playerEnvironment(build, acceptsBlob = false) {
+function playerEnvironment(build) {
   const states = []
   const cleanups = []
   const events = new EventTarget()
   const revoked = []
   let src = ''
-  let srcObject = null
   const audio = {
     currentTime: 0, loop: false, calls: 0, paused: true, duration: NaN, readyState: 0,
     get src() { return src }, set src(value) { src = value },
     get currentSrc() { return src },
-    get srcObject() { return srcObject }, set srcObject(value) {
-      if (value !== null && !acceptsBlob) throw new TypeError('Blob srcObject is not supported')
-      srcObject = value
-    },
     addEventListener: (...args) => events.addEventListener(...args), removeEventListener: (...args) => events.removeEventListener(...args),
     play() { this.calls++; this.paused = false; events.dispatchEvent(new Event('play')); return Promise.resolve() },
     pause() { this.paused = true; events.dispatchEvent(new Event('pause')) }, load() {}, removeAttribute() { src = '' },
@@ -129,43 +124,39 @@ function playerEnvironment(build, acceptsBlob = false) {
 const track = { audio: new Blob(['wav']), cues: [{ time: 0, index: 0, phase: 'original' }] }
 
 test('prepared track uses HTML audio.loop; pause resumes exactly and stop rewinds', async () => {
-  for (const acceptsBlob of [false, true]) {
-    let builds = 0
-    const env = playerEnvironment(async () => { builds++; return track }, acceptsBlob)
-    await env.player.prepare()
-    assert(!env.states.includes('ready'), 'a generated Blob must first be recognized by the media element')
-    assert(env.states.includes('Загрузка трека в плеер…'))
-    assert.equal(env.audio.srcObject, acceptsBlob ? track.audio : null)
-    assert.equal(env.audio.src, acceptsBlob ? '' : 'blob:track')
-    env.emit('loadedmetadata')
-    assert(!env.states.includes('ready'), 'invalid duration must not expose the player')
-    env.audio.duration = 8
-    env.audio.readyState = 1
-    env.emit('loadedmetadata')
-    assert(env.states.includes('ready'))
-    assert.equal(env.audio.calls, 0, 'preparation must not autoplay outside a gesture')
-    const playing = env.audio.play()
-    assert.equal(env.audio.calls, 1, 'play is invoked synchronously from the click')
-    await playing
-    assert(!env.states.includes('playing'), 'play may fire before buffering finishes')
-    env.emit('playing')
-    assert(env.states.includes('playing'))
-    assert.equal(env.audio.loop, true)
-    env.audio.currentTime = 1.5
-    env.audio.pause()
-    assert(env.states.includes('paused'))
-    assert.equal(env.audio.currentTime, 1.5)
-    await env.audio.play()
-    assert.equal(env.audio.currentTime, 1.5)
-    env.player.stop()
-    assert.equal(env.audio.currentTime, 0)
-    await env.audio.play()
-    assert.equal(builds, 1)
-    env.dispose()
-    assert.deepEqual(env.revoked, acceptsBlob ? [] : ['blob:track'])
-    assert.equal(env.audio.src, '')
-    assert.equal(env.audio.srcObject, null)
-  }
+  let builds = 0
+  const env = playerEnvironment(async () => { builds++; return track })
+  await env.player.prepare()
+  assert(!env.states.includes('ready'), 'a generated Blob must first be recognized by the media element')
+  assert(env.states.includes('Загрузка трека в плеер…'))
+  assert.equal(env.audio.src, 'blob:track')
+  env.emit('loadedmetadata')
+  assert(!env.states.includes('ready'), 'invalid duration must not expose the player')
+  env.audio.duration = 8
+  env.audio.readyState = 1
+  env.emit('loadedmetadata')
+  assert(env.states.includes('ready'))
+  assert.equal(env.audio.calls, 0, 'preparation must not autoplay outside a gesture')
+  const playing = env.audio.play()
+  assert.equal(env.audio.calls, 1, 'play is invoked synchronously from the click')
+  await playing
+  assert(!env.states.includes('playing'), 'play may fire before buffering finishes')
+  env.emit('playing')
+  assert(env.states.includes('playing'))
+  assert.equal(env.audio.loop, true)
+  env.audio.currentTime = 1.5
+  env.audio.pause()
+  assert(env.states.includes('paused'))
+  assert.equal(env.audio.currentTime, 1.5)
+  await env.audio.play()
+  assert.equal(env.audio.currentTime, 1.5)
+  env.player.stop()
+  assert.equal(env.audio.currentTime, 0)
+  await env.audio.play()
+  assert.equal(builds, 1)
+  env.dispose()
+  assert.deepEqual(env.revoked, ['blob:track'])
+  assert.equal(env.audio.src, '')
 })
 
 test('stopping or unmounting during preparation aborts and ignores late results', async () => {

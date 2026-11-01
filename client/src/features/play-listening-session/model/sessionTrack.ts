@@ -49,7 +49,13 @@ export async function buildSessionTrack(words: IWord[], intervalSeconds: number,
     }
   }
   signal.throwIfAborted()
-  return { audio: new Blob([wavHeader(samples, SAMPLE_RATE), ...parts], { type: 'audio/wav' }), cues }
+  const assembled = new Blob([wavHeader(samples, SAMPLE_RATE), ...parts], { type: 'audio/wav' })
+  // Materialize all slices before the media element starts reading byte ranges.
+  const started = performance.now()
+  const buffer = await assembled.arrayBuffer()
+  signal.throwIfAborted()
+  onDiagnostic?.(`TRACK_BUFFER_READY ${JSON.stringify({ ms: Math.round(performance.now() - started), bytes: buffer.byteLength })}`)
+  return { audio: new Blob([buffer], { type: 'audio/wav' }), cues }
 }
 
 export function sessionPosition(cues: SessionCue[], time: number) {
