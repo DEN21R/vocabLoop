@@ -9,6 +9,7 @@ import {
 import MenuItem from '@mui/material/MenuItem'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { useState, type FormEvent } from 'react'
+import { isAxiosError } from 'axios'
 import { addWord } from '../api/addWord'
 import type { IWord } from '../../../entities/word'
 import ramImage from '../../../shared/assets/ramNewWord.png'
@@ -65,6 +66,7 @@ function AddWordForm({ onCreated }: AddWordProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
     setSabmitError('')
 
     const data = {
@@ -85,8 +87,9 @@ function AddWordForm({ onCreated }: AddWordProps) {
       const result = await addWord(data)
       onCreated(result.word)
       setOriginal('')
-    } catch {
-      setSabmitError('не удалось добавить слово')
+    } catch (cause) {
+      setSabmitError(isAxiosError(cause) && typeof cause.response?.data?.message === 'string'
+        ? cause.response.data.message : 'Не удалось добавить слово')
     } finally {
       setIsSubmitting(false)
     }

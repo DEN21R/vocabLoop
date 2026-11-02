@@ -6,3 +6,17 @@ body,
   padding: 0;
   box-sizing: border-box;
 }
+
+.MuiOutlinedInput-root.Mui-focused:not(.Mui-error):not(.Mui-disabled)
+  .MuiOutlinedInput-notchedOutline {
+  border-color: #c97539;
+}
+
+.MuiInputLabel-root.Mui-focused:not(.Mui-error):not(.Mui-disabled) {
+  color: #c97539;
+}
+
+.MuiInput-root.Mui-focused:not(.Mui-error):not(.Mui-disabled)::after,
+.MuiFilledInput-root.Mui-focused:not(.Mui-error):not(.Mui-disabled)::after {
+  border-bottom-color: #c97539;
+}

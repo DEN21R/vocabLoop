@@ -6,7 +6,7 @@ export interface IWordResponse {
   nextCursor?: string | null
 }
 
-export async function getWords(page?: { cursor?: string; search?: string }, signal?: AbortSignal) {
+export async function getWords(page?: { cursor?: string; search?: string; session?: 'all' | 'in' | 'out' }, signal?: AbortSignal) {
   const response = await api.get<IWordResponse>('/words', {
     params: page ? { limit: 20, ...page } : undefined,
     signal,

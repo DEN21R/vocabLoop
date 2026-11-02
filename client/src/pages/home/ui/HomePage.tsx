@@ -59,6 +59,7 @@ function HomePage() {
   const [status, setStatus] = useState<Status>('loading')
   const [words, setWords] = useState<IWord[]>([])
   const [search, setSearch] = useState('')
+  const [sessionFilter, setSessionFilter] = useState<'all' | 'in' | 'out'>('all')
   const query = search.trim()
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -101,7 +102,7 @@ function HomePage() {
     const matches = [newWord.original, newWord.translation].some((text) =>
       text.toLowerCase().includes(query.toLowerCase()),
     )
-    if (matches) setWords((previousWord) => [newWord, ...previousWord])
+    if (matches && sessionFilter !== 'in') setWords((previousWord) => [newWord, ...previousWord])
   }
 
   const handleWordDeleted = (wordId: string) => {
@@ -136,7 +137,7 @@ function HomePage() {
       setLoadingMore(false)
       setLoadError('')
       try {
-        const result = await getWords({ search: query }, controller.signal)
+        const result = await getWords({ search: query, session: sessionFilter }, controller.signal)
         if (controller.signal.aborted) return
         setWords(result.words)
         setNextCursor(result.nextCursor ?? null)
@@ -153,7 +154,7 @@ function HomePage() {
       controller.abort()
       request.current?.abort()
     }
-  }, [query])
+  }, [query, sessionFilter])
 
   useEffect(() => {
     let cancelled = false
@@ -185,7 +186,7 @@ function HomePage() {
     setLoadError('')
     try {
       const result = await getWords(
-        { cursor: nextCursor, search: query },
+        { cursor: nextCursor, search: query, session: sessionFilter },
         controller.signal,
       )
       if (controller.signal.aborted) return
@@ -245,6 +246,27 @@ function HomePage() {
           setSearch(event.target.value)
         }}
       />
+      <TextField
+        select
+        label="Показать слова"
+        value={sessionFilter}
+        fullWidth
+        size="small"
+        sx={{
+          mb: 2,
+          '& .MuiInputLabel-root': { color: '#895a39' },
+          '& .MuiInputLabel-root.Mui-focused': { color: '#f78811' },
+          '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: '#f78811' },
+        }}
+        onChange={(event) => {
+          stop()
+          setSessionFilter(event.target.value as 'all' | 'in' | 'out')
+        }}
+      >
+        <MenuItem value="all">Все слова</MenuItem>
+        <MenuItem value="in">В сессиях</MenuItem>
+        <MenuItem value="out">Без сессии</MenuItem>
+      </TextField>
       {sessionsError && <Typography color="error">{sessionsError}</Typography>}
       {status === 'success' && (
         <Box>
@@ -391,7 +413,7 @@ function HomePage() {
 
         {status === 'success' && words.length === 0 && (
           <Typography>
-            {query ? 'Ничего не найдено' : 'Пока нет слов'}
+            {query ? 'Ничего не найдено' : sessionFilter === 'in' ? 'Нет слов в сессиях' : sessionFilter === 'out' ? 'Нет слов без сессии' : 'Пока нет слов'}
           </Typography>
         )}
 

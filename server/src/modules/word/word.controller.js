@@ -1,6 +1,7 @@
 import Word from './Word.js'
 import mongoose from 'mongoose'
 import { translateText } from '../../services/translationService.js'
+import ListeningSession from '../listening-session/ListeningSession.js'
 
 export const createWord = async (req, res) => {
   try {
@@ -48,6 +49,17 @@ export const createWord = async (req, res) => {
       })
     }
 
+    const literal = cleanOriginal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const exists = await Word.exists({
+      user: req.user.id,
+      original: { $regex: `^${literal}$`, $options: 'i' },
+      sourceLanguage: cleanSourceLanguage,
+      targetLanguage: cleanTargetLanguage,
+    })
+    if (exists) {
+      return res.status(409).json({ message: 'Это слово уже есть в вашем словаре для выбранных языков.' })
+    }
+
     const translation = await translateText({
       text: cleanOriginal,
       sourceLanguage: cleanSourceLanguage,
@@ -70,11 +82,18 @@ export const createWord = async (req, res) => {
 export const getWords = async (req, res) => {
   try {
     const filter = { user: req.user.id }
-    const { limit, cursor, search = '' } = req.query
+    const { limit, cursor, search = '', session = 'all' } = req.query
+    if (!['all', 'in', 'out'].includes(session)) {
+      return res.status(400).json({ message: 'Некорректный фильтр сессий' })
+    }
     if (typeof search !== 'string' || search.length > 200) {
       return res.status(400).json({ message: 'Некорректный поисковый запрос' })
     }
     const conditions = []
+    if (session !== 'all') {
+      const ids = await ListeningSession.distinct('words', { user: req.user.id })
+      filter._id = session === 'in' ? { $in: ids } : { $nin: ids }
+    }
     if (search.trim()) {
       const literal = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       conditions.push({ $or: [{ original: { $regex: literal, $options: 'i' } }, { translation: { $regex: literal, $options: 'i' } }] })
