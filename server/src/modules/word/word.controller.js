@@ -83,14 +83,15 @@ export const getWords = async (req, res) => {
   try {
     const filter = { user: req.user.id }
     const { limit, cursor, search = '', session = 'all' } = req.query
-    if (!['all', 'in', 'out'].includes(session)) {
+    if (!['all', 'in', 'out', 'learned'].includes(session)) {
       return res.status(400).json({ message: 'Некорректный фильтр сессий' })
     }
     if (typeof search !== 'string' || search.length > 200) {
       return res.status(400).json({ message: 'Некорректный поисковый запрос' })
     }
     const conditions = []
-    if (session !== 'all') {
+    if (session === 'learned') filter.isLearned = true
+    if (session === 'in' || session === 'out') {
       const ids = await ListeningSession.distinct('words', { user: req.user.id })
       filter._id = session === 'in' ? { $in: ids } : { $nin: ids }
     }
@@ -130,15 +131,16 @@ export const updateWord = async (req, res) => {
       return res.status(400).json({ message: 'Некорректный ID слова' })
     }
     const { original, translation } = req.body ?? {}
-    if (
+    const learning = req.body?.isLearned === true
+    if (!learning && (
       typeof original !== 'string' || !original.trim() || original.trim().length > 200 ||
       typeof translation !== 'string' || !translation.trim() || translation.trim().length > 2000
-    ) {
+    )) {
       return res.status(400).json({ message: 'Укажите слово до 200 символов и перевод до 2000 символов' })
     }
     const word = await Word.findOneAndUpdate(
       { _id: req.params.id, user: req.user.id },
-      { $set: { original: original.trim(), translation: translation.trim() } },
+      { $set: learning ? { isLearned: true } : { original: original.trim(), translation: translation.trim() } },
       { new: true, runValidators: true },
     )
     if (!word) return res.status(404).json({ message: 'Слово не найдено' })

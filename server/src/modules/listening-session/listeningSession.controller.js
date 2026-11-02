@@ -78,7 +78,7 @@ export const getSession = async (req, res) => {
       .populate({
         path: 'words',
         match: { user: req.user.id },
-        select: '_id original translation sourceLanguage targetLanguage hasRecording createdAt updatedAt',
+        select: '_id original translation sourceLanguage targetLanguage hasRecording isLearned createdAt updatedAt',
       })
     if (!session) return res.status(404).json({ message: 'Набор не найден' })
 

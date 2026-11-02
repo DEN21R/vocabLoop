@@ -1,8 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { Box, Button, TextField, Typography } from '@mui/material'
+import { Box, Button, IconButton, TextField, Typography } from '@mui/material'
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import type { ListeningSession } from '../../../entities/listening-session'
-import type { IWord } from '../../../entities/word'
+import { updateWord, type IWord } from '../../../entities/word'
 import { updateSession } from '../api/updateSession'
+import ramLearnImage from '../../../shared/assets/ramLearn.png'
 
 interface Props {
   session: Omit<ListeningSession, 'words'> & { words: IWord[] }
@@ -23,6 +26,7 @@ export default function EditSessionForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [learnedRam, setLearnedRam] = useState<{ key: number; top: number; left: number } | null>(null)
 
   function moveWord(index: number, direction: number) {
     const next = [...words]
@@ -47,6 +51,33 @@ export default function EditSessionForm({
       onWordsChange(next)
     } catch {
       setError('Не удалось убрать слово из сессии. Попробуйте ещё раз.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function learnWord(wordId: string, position: DOMRect) {
+    if (saving) return
+    const next = words.filter((word) => word._id !== wordId)
+    setSaving(true)
+    setSaved(false)
+    setError('')
+    let marked = false
+    try {
+      await updateWord(wordId, { isLearned: true })
+      marked = true
+      await updateSession(session._id, { words: next.map((word) => word._id) })
+      setWords(next)
+      onWordsChange(next)
+      setLearnedRam({
+        key: Date.now(),
+        top: Math.max(16, Math.min(position.top - 100, window.innerHeight - 220)),
+        left: Math.max(16, Math.min(position.right + 8, window.innerWidth - 216)),
+      })
+    } catch {
+      setError(marked
+        ? 'Слово отмечено как выученное, но не удалось убрать его из сессии. Нажмите «Выучил» ещё раз.'
+        : 'Не удалось отметить слово как выученное. Попробуйте ещё раз.')
     } finally {
       setSaving(false)
     }
@@ -138,57 +169,86 @@ export default function EditSessionForm({
           <Typography sx={{ mb: 1 }}>
             {index + 1}. {word.original} — {word.translation}
           </Typography>
-          <Button
-            sx={{
-              fontWeight: 'bold',
-              textTransform: 'uppercase',
-              fontSize: '0.6rem',
-              color: '#f78811',
-              border: '2px #f78811 solid',
-              borderRadius: '12px',
-            }}
-            type="button"
-            disabled={saving || index === 0}
-            onClick={() => moveWord(index, -1)}
-          >
-            Выше
-          </Button>
-          <Button
-            sx={{
-              ml: 1,
-              fontWeight: 'bold',
-              textTransform: 'uppercase',
-              fontSize: '0.6rem',
-              color: '#f78811',
-              border: '2px #f78811 solid',
-              borderRadius: '12px',
-            }}
-            type="button"
-            disabled={saving || index === words.length - 1}
-            onClick={() => moveWord(index, 1)}
-          >
-            Ниже
-          </Button>
-          <Button
-            sx={{
-              ml: 1,
-              fontWeight: 'bold',
-              textTransform: 'uppercase',
-              fontSize: '0.6rem',
-              color: '#f78811',
-              border: '2px #f78811 solid',
-              borderRadius: '12px',
-            }}
-            type="button"
-            disabled={saving}
-            onClick={() => {
-              void removeWord(word._id)
-            }}
-          >
-            Убрать из сессии
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+            <IconButton
+              sx={{
+                color: '#f78811',
+                border: '2px #f78811 solid',
+                borderRadius: '50%', width: 36, height: 36,
+              }}
+              type="button"
+              aria-label="Поднять слово"
+              title="Выше"
+              disabled={saving || index === 0}
+              onClick={() => moveWord(index, -1)}
+            >
+              <KeyboardArrowUpIcon />
+            </IconButton>
+            <IconButton
+              sx={{
+                color: '#f78811',
+                border: '2px #f78811 solid',
+                borderRadius: '50%', width: 36, height: 36,
+              }}
+              type="button"
+              aria-label="Опустить слово"
+              title="Ниже"
+              disabled={saving || index === words.length - 1}
+              onClick={() => moveWord(index, 1)}
+            >
+              <KeyboardArrowDownIcon />
+            </IconButton>
+            <Button
+              sx={{
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                fontSize: '0.6rem',
+                color: '#f78811',
+                border: '2px #f78811 solid',
+                borderRadius: '12px',
+              }}
+              type="button"
+              disabled={saving}
+              onClick={() => {
+                void removeWord(word._id)
+              }}
+            >
+              Убрать из сессии
+            </Button>
+            <Button
+              type="button"
+              disabled={saving}
+              onClick={(event) => { void learnWord(word._id, event.currentTarget.getBoundingClientRect()) }}
+              sx={{
+                fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.6rem',
+                color: '#fff', bgcolor: '#788447', border: '2px solid #788447', borderRadius: '12px',
+                '&:hover': { bgcolor: '#626d37', borderColor: '#626d37' },
+              }}
+            >
+              Выучил
+            </Button>
+          </Box>
         </Box>
       ))}
+      {learnedRam && (
+        <Box
+          key={learnedRam.key}
+          component="img"
+          src={ramLearnImage}
+          alt=""
+          aria-hidden="true"
+          sx={{
+            position: 'fixed', top: learnedRam.top, left: learnedRam.left,
+            width: 200, maxWidth: 'calc(100vw - 32px)', height: 'auto',
+            pointerEvents: 'none', zIndex: 1400,
+            animation: 'learnedRamFade 6s ease-in-out both',
+            '@keyframes learnedRamFade': {
+              '0%, 100%': { opacity: 0 },
+              '12%, 85%': { opacity: 1 },
+            },
+          }}
+        />
+      )}
       {error && (
         <Typography color="error" role="alert">
           {error}

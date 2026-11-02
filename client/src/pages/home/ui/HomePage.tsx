@@ -59,7 +59,7 @@ function HomePage() {
   const [status, setStatus] = useState<Status>('loading')
   const [words, setWords] = useState<IWord[]>([])
   const [search, setSearch] = useState('')
-  const [sessionFilter, setSessionFilter] = useState<'all' | 'in' | 'out'>('all')
+  const [sessionFilter, setSessionFilter] = useState<'all' | 'in' | 'out' | 'learned'>('all')
   const query = search.trim()
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -102,7 +102,7 @@ function HomePage() {
     const matches = [newWord.original, newWord.translation].some((text) =>
       text.toLowerCase().includes(query.toLowerCase()),
     )
-    if (matches && sessionFilter !== 'in') setWords((previousWord) => [newWord, ...previousWord])
+    if (matches && (sessionFilter === 'all' || sessionFilter === 'out')) setWords((previousWord) => [newWord, ...previousWord])
   }
 
   const handleWordDeleted = (wordId: string) => {
@@ -255,17 +255,28 @@ function HomePage() {
         sx={{
           mb: 2,
           '& .MuiInputLabel-root': { color: '#895a39' },
-          '& .MuiInputLabel-root.Mui-focused': { color: '#f78811' },
-          '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: '#f78811' },
+          color: '#5d2c07',
+          '& .MuiSelect-select': { color: '#5d2c07' },
+          '& .MuiOutlinedInput-root': { bgcolor: '#fcf5f0' },
+          '& .MuiSelect-icon': { color: '#895a39' },
+          '& .MuiInputLabel-root.Mui-focused': { color: '#c97539' },
+          '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: '#c97539' },
         }}
+        slotProps={{ select: { MenuProps: { slotProps: { paper: { sx: {
+          bgcolor: '#fcf5f0', color: '#5d2c07',
+          '& .MuiMenuItem-root:hover': { bgcolor: '#f4e5d6' },
+          '& .MuiMenuItem-root.Mui-selected': { bgcolor: '#ead7bd' },
+          '& .MuiMenuItem-root.Mui-selected:hover, & .MuiMenuItem-root.Mui-focusVisible': { bgcolor: '#e1c49e' },
+        } } } } } }}
         onChange={(event) => {
           stop()
-          setSessionFilter(event.target.value as 'all' | 'in' | 'out')
+          setSessionFilter(event.target.value as 'all' | 'in' | 'out' | 'learned')
         }}
       >
         <MenuItem value="all">Все слова</MenuItem>
         <MenuItem value="in">В сессиях</MenuItem>
         <MenuItem value="out">Без сессии</MenuItem>
+        <MenuItem value="learned">Выученные слова</MenuItem>
       </TextField>
       {sessionsError && <Typography color="error">{sessionsError}</Typography>}
       {status === 'success' && (
@@ -413,7 +424,7 @@ function HomePage() {
 
         {status === 'success' && words.length === 0 && (
           <Typography>
-            {query ? 'Ничего не найдено' : sessionFilter === 'in' ? 'Нет слов в сессиях' : sessionFilter === 'out' ? 'Нет слов без сессии' : 'Пока нет слов'}
+            {query ? 'Ничего не найдено' : sessionFilter === 'in' ? 'Нет слов в сессиях' : sessionFilter === 'out' ? 'Нет слов без сессии' : sessionFilter === 'learned' ? 'Пока нет выученных слов' : 'Пока нет слов'}
           </Typography>
         )}
 
@@ -421,7 +432,7 @@ function HomePage() {
           {words.map((word) => (
             <Box
               sx={{
-                backgroundColor: '#fcf5f0',
+                backgroundColor: word.isLearned ? '#e8ecd3' : '#fcf5f0',
                 boxShadow: '1px 2px 5px #9a8c79',
                 borderRadius: '10px',
                 display: 'flex',
@@ -462,6 +473,11 @@ function HomePage() {
               />
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <WordCard el={word} />
+                {word.isLearned && (
+                  <Typography variant="body2" sx={{ color: '#66713f', fontWeight: 'bold' }}>
+                    Выучил
+                  </Typography>
+                )}
                 {word.hasRecording && (
                   <Typography variant="body2" color="text.secondary">
                     Есть моя запись

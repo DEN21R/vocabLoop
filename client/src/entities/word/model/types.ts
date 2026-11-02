@@ -3,6 +3,7 @@ export interface IWord {
   original: string
   translation: string
   hasRecording?: boolean
+  isLearned?: boolean
   sourceLanguage: string
   targetLanguage: string
   createdAt: string

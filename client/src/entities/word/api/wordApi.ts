@@ -6,7 +6,7 @@ export interface IWordResponse {
   nextCursor?: string | null
 }
 
-export async function getWords(page?: { cursor?: string; search?: string; session?: 'all' | 'in' | 'out' }, signal?: AbortSignal) {
+export async function getWords(page?: { cursor?: string; search?: string; session?: 'all' | 'in' | 'out' | 'learned' }, signal?: AbortSignal) {
   const response = await api.get<IWordResponse>('/words', {
     params: page ? { limit: 20, ...page } : undefined,
     signal,
@@ -14,7 +14,7 @@ export async function getWords(page?: { cursor?: string; search?: string; sessio
   return response.data
 }
 
-export async function updateWord(id: string, data: Pick<IWord, 'original' | 'translation'>) {
+export async function updateWord(id: string, data: Pick<IWord, 'original' | 'translation'> | { isLearned: true }) {
   const response = await api.patch<{ word: IWord }>(`/words/${id}`, data)
   return response.data
 }

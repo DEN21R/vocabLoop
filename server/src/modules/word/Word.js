@@ -27,6 +27,10 @@ const wordSchema = mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isLearned: {
+    type: Boolean,
+    default: false,
+  },
   sourceLanguage: {
     type: String,
     required: true,
