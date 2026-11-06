@@ -6,6 +6,18 @@ export interface IWordResponse {
   nextCursor?: string | null
 }
 
+export interface WordStatistics {
+  total: number
+  learned: number
+  learnedEnglish: number
+  learnedGerman: number
+}
+
+export async function getWordStatistics(signal?: AbortSignal) {
+  const response = await api.get<WordStatistics>('/words/statistics', { signal })
+  return response.data
+}
+
 export async function getWords(page?: { cursor?: string; search?: string; session?: 'all' | 'in' | 'out' | 'learned' }, signal?: AbortSignal) {
   const response = await api.get<IWordResponse>('/words', {
     params: page ? { limit: 20, ...page } : undefined,

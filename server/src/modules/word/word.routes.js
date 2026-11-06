@@ -1,5 +1,6 @@
 import { createWord } from './word.controller.js'
 import { getWords } from './word.controller.js'
+import { getWordStatistics } from './word.controller.js'
 import { deleteWord } from './word.controller.js'
 import { updateWord } from './word.controller.js'
 import { protect } from '../auth/auth.middleware.js'
@@ -12,6 +13,7 @@ const wordRouter = Router()
 
 wordRouter.post('/', protect, createWord)
 wordRouter.get('/', protect, getWords)
+wordRouter.get('/statistics', protect, getWordStatistics)
 wordRouter.patch('/:id', protect, updateWord)
 wordRouter.delete('/:id', protect, deleteWord)
 wordRouter.put(

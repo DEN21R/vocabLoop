@@ -125,6 +125,21 @@ export const getWords = async (req, res) => {
   }
 }
 
+export const getWordStatistics = async (req, res) => {
+  try {
+    const filter = { user: req.user.id }
+    const [total, learned, learnedEnglish, learnedGerman] = await Promise.all([
+      Word.countDocuments(filter),
+      Word.countDocuments({ ...filter, isLearned: true }),
+      Word.countDocuments({ ...filter, isLearned: true, sourceLanguage: 'en' }),
+      Word.countDocuments({ ...filter, isLearned: true, sourceLanguage: 'de' }),
+    ])
+    return res.status(200).json({ total, learned, learnedEnglish, learnedGerman })
+  } catch {
+    return res.status(500).json({ message: 'Не удалось загрузить статистику' })
+  }
+}
+
 export const updateWord = async (req, res) => {
   try {
     if (!mongoose.isObjectIdOrHexString(req.params.id)) {
