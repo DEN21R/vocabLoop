@@ -101,10 +101,33 @@ export const me = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar || '',
       },
     })
   } catch (error) {
     console.error('me error:', error)
     return res.status(500).json({ message: 'Failed to get profile' })
+  }
+}
+
+export const updateProfile = async (req, res) => {
+  const { name, avatar } = req.body || {}
+  if (typeof name !== 'string' || !name.trim() || name.trim().length > 80) {
+    return res.status(400).json({ message: 'Введите имя длиной до 80 символов' })
+  }
+  if (typeof avatar !== 'string' || avatar.length > 90000 ||
+    (avatar !== '' && !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(avatar))) {
+    return res.status(400).json({ message: 'Не удалось сохранить фото. Выберите другое изображение' })
+  }
+  try {
+    const user = await User.findByIdAndUpdate(req.user.id, {
+      $set: { name: name.trim(), avatar },
+    }, { new: true, runValidators: true }).select('-password')
+    if (!user) return res.status(401).json({ message: 'User not found' })
+    return res.status(200).json({
+      user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar || '' },
+    })
+  } catch {
+    return res.status(500).json({ message: 'Не удалось сохранить профиль' })
   }
 }

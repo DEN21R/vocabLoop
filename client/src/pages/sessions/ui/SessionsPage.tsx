@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import Link from '@mui/material/Link'
-import { Box, Button, Typography } from '@mui/material'
+import { Avatar, Box, Button, Typography } from '@mui/material'
 import {
   getSessions,
   deleteSession,
   type ListeningSession,
 } from '../../../entities/listening-session'
-import { getMe } from '../../../shared/api/auth'
+import { getMe, type AuthUser } from '../../../shared/api/auth'
 import { IconButton } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import backHome from '../../../shared/assets/backHome.png'
@@ -28,7 +28,7 @@ function SessionsPage() {
   const [attempt, setAttempt] = useState(0)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState('')
-  const [userName, setUserName] = useState('')
+  const [user, setUser] = useState<AuthUser | null>(null)
 
   async function handleDelete(session: ListeningSession) {
     if (
@@ -74,10 +74,10 @@ function SessionsPage() {
 
     getMe()
       .then(({ user }) => {
-        if (!cancelled) setUserName(user.name)
+        if (!cancelled) setUser(user)
       })
       .catch(() => {
-        if (!cancelled) setUserName('')
+        if (!cancelled) setUser(null)
       })
 
     return () => {
@@ -136,7 +136,14 @@ function SessionsPage() {
         />
       )}
       <Box sx={{ p: 3, position: 'relative', zIndex: 1 }}>
-        <Typography variant="h5">Привет {userName} 👋!</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+          <Typography variant="h5">Привет {user?.name || ''} 👋!</Typography>
+          {user && (
+            <Avatar src={user.avatar || undefined} alt={user.name} sx={{ width: 48, height: 48, bgcolor: '#e9dccb', color: '#895a39' }}>
+              {user.name.trim().charAt(0).toUpperCase()}
+            </Avatar>
+          )}
+        </Box>
         <Typography sx={{ mt: 1 }}>
           С возвращением, продолжаем идти к цели😊.
         </Typography>

@@ -13,6 +13,7 @@ export interface AuthUser {
   id: string
   name: string
   email: string
+  avatar?: string
 }
 
 export interface IAuthResponse {
@@ -37,5 +38,10 @@ export const login = async (user: LoginRequest): Promise<IAuthResponse> => {
 
 export const getMe = async (): Promise<CurrentUserResponse> => {
   const response = await api.get<CurrentUserResponse>('/auth/me')
+  return response.data
+}
+
+export const updateProfile = async (profile: { name: string; avatar: string }): Promise<CurrentUserResponse> => {
+  const response = await api.patch<CurrentUserResponse>('/auth/me', profile)
   return response.data
 }

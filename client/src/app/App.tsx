@@ -11,6 +11,7 @@ import SessionsPage from '../pages/sessions'
 import ListeningSessionPage from '../pages/listening-session'
 import StatisticsPage from '../pages/statistics'
 import ProfilePage from '../pages/profile'
+import SettingsPage from '../pages/settings/ui/SettingsPage'
 
 function App() {
   return (
@@ -64,6 +65,7 @@ function App() {
           <Route path="sessions/:id" element={<ListeningSessionPage />} />
           <Route path="statistics" element={<StatisticsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </Box>
